@@ -38,6 +38,14 @@ const receiveMessage = (
         sendResponse(response);
       });
       return true;
+    case "REMOVE":
+      chrome.runtime.sendMessage(
+        { type: msg.type, data: { url: msg.data.url, username: msg.data.username } },
+        (response) => {
+          sendResponse(response);
+        }
+      );
+      return true;
   }
 
   //   const headlines = Array.from(document.getElementsByTagName<"h1">("h1")).map((h1) => h1.innerText);

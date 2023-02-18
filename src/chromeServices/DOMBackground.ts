@@ -68,6 +68,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     });
 
     sendResponse({ success: true });
+  } else if (request.type === "REMOVE") {
+    const idx = _.findIndex(credentials[request.data.url].logins, { username: request.data.username });
+    if (idx >= 0) {
+      credentials[request.data.url].logins.splice(idx, 1);
+    }
+
+    sendResponse({ success: true });
   } else if (request.type === "REQUEST_CREDENTIALS") {
     // TODO: We may consider returning the credential logins in a particular order
     // so that the most used is at position 0. (We autofill element 0)

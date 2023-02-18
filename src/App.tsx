@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import DisplayCredentials from "./components/DisplayCredentials";
 import NeverSave from "./components/NeverSave";
 import Pending from "./components/Pending";
 import { Credential, DOMMessage } from "./types";
@@ -37,7 +38,8 @@ function App() {
     chrome.tabs &&
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         let url = tabs[0].url ?? "";
-        url = url.toString().slice(0, url.toString().indexOf("?") ?? url.toString().length);
+        const idx = url.toString().indexOf("?");
+        url = url.toString().slice(0, idx >= 0 ? idx : url.toString().length);
         handleUrl(url);
       });
   };
@@ -99,7 +101,9 @@ function App() {
     <div className="">
       <h1>{url}</h1>
 
-      <div className=""></div>
+      <div className="">
+        <DisplayCredentials url={url} credentials={credentials} handleCredentials={handleCredentials} />
+      </div>
     </div>
   );
 }
