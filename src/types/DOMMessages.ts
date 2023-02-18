@@ -1,5 +1,13 @@
 export type DOMMessage = {
-  type: "GET_DOM" | "FORM_SUBMIT" | "PERSIST" | "REMOVE" | "CLEAR_PENDING" | "REQUEST_CREDENTIALS";
+  type:
+    | "GET_DOM"
+    | "FORM_SUBMIT"
+    | "PERSIST"
+    | "REMOVE"
+    | "CLEAR_PENDING_FOR_SITE"
+    | "REQUEST_CREDENTIALS"
+    | "NEVER_SAVE_FOR_SITE"
+    | "ENABLE_SAVE_FOR_SITE";
   login: any;
   action: any;
   settings: any;
@@ -17,4 +25,10 @@ export type DOMMessageResponse = {
   headlines?: any;
   data?: string;
   [key: string]: any;
+};
+
+export type Credential = {
+  url: string;
+  neverSave?: boolean;
+  logins: { username: string; password: string }[];
 };
