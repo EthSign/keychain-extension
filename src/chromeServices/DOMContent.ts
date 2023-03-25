@@ -1,4 +1,6 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
+import { defaultSnapOrigin } from "../config";
+import { GetSnapsResponse, Snap } from "../types";
 
 const credentials: Record<string, { url: string; username: string; password: string }> = {};
 
@@ -45,6 +47,17 @@ const receiveMessage = (
           sendResponse(response);
         }
       );
+      return true;
+    case "CONNECT_SNAP":
+      window.postMessage(
+        { type: "EthSignKeychainEvent", text: "Hello from content_script.js!" },
+        "*" /* targetOrigin: any */
+      );
+      // connectSnap("snap:w3ptestsnap").then(() =>
+      //   sendResponse({
+      //     data: "Snap connect request completed"
+      //   })
+      // );
       return true;
   }
 
@@ -149,3 +162,123 @@ document.addEventListener(
   },
   false
 );
+
+// Inject script
+var s = document.createElement("script");
+s.src = chrome.runtime.getURL("/script.js");
+(document.head || document.documentElement).appendChild(s);
+s.onload = function () {
+  s.remove();
+};
+
+// window.addEventListener("message", function (event) {
+//   if (event.type === "EthSignKeychainEvent") {
+//     console.log("Received ESKE");
+//   }
+// });
+var port = chrome.runtime.connect();
+window.addEventListener(
+  "message",
+  (event) => {
+    // We only accept messages from ourselves
+    if (event.source !== window) {
+      return;
+    }
+
+    if (event.data.type && event.data.type === "FROM_PAGE") {
+      console.log("Content script received: " + event.data.text);
+      port.postMessage(event.data.text);
+    }
+  },
+  false
+);
+
+// Begin Snaps
+/**
+ * Get the installed snaps in MetaMask.
+ *
+ * @returns The snaps installed in MetaMask.
+ */
+export const getSnaps = async (): Promise<GetSnapsResponse> => {
+  return (await window.ethereum.request({
+    method: "wallet_getSnaps"
+  })) as unknown as GetSnapsResponse;
+};
+
+/**
+ * Connect a snap to MetaMask.
+ *
+ * @param snapId - The ID of the snap.
+ * @param params - The params to pass with the snap to connect.
+ */
+export const connectSnap = async (
+  snapId: string = defaultSnapOrigin,
+  params: Record<"version" | string, unknown> = {}
+) => {
+  console.log("window.ethereum: " + window.ethereum);
+  await window.ethereum.request({
+    method: "wallet_requestSnaps",
+    params: {
+      [snapId]: params
+    }
+  });
+};
+
+/**
+ * Get the snap from MetaMask.
+ *
+ * @param version - The version of the snap to install (optional).
+ * @returns The snap object returned by the extension.
+ */
+export const getSnap = async (version?: string): Promise<Snap | undefined> => {
+  try {
+    const snaps = await getSnaps();
+
+    return Object.values(snaps).find((snap) => snap.id === defaultSnapOrigin && (!version || snap.version === version));
+  } catch (e) {
+    console.log("Failed to obtain installed snap", e);
+    return undefined;
+  }
+};
+
+/**
+ * Invoke the "hello" method from the example snap.
+ */
+
+export const sendSet = async () => {
+  return await window.ethereum.request({
+    method: "wallet_invokeSnap",
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: "set_password",
+        params: { website: "localhost:8000", username: "username", password: "password" }
+      }
+    }
+  });
+};
+
+export const sendGet = async () => {
+  return await window.ethereum.request({
+    method: "wallet_invokeSnap",
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: "get_password", params: { website: "localhost:8000" } }
+    }
+  });
+};
+
+export const sendRemove = async () => {
+  return await window.ethereum.request({
+    method: "wallet_invokeSnap",
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: "remove_password",
+        params: { website: "localhost:8000", username: "username" }
+      }
+    }
+  });
+};
+
+export const isLocalSnap = (snapId: string) => snapId.startsWith("local:");

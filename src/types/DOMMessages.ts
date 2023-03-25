@@ -7,7 +7,9 @@ export type DOMMessage = {
     | "CLEAR_PENDING_FOR_SITE"
     | "REQUEST_CREDENTIALS"
     | "NEVER_SAVE_FOR_SITE"
-    | "ENABLE_SAVE_FOR_SITE";
+    | "ENABLE_SAVE_FOR_SITE"
+    | "CONNECT_SNAP"
+    | "GET_SNAP";
   login: any;
   action: any;
   settings: any;

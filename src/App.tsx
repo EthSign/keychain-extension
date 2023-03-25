@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import DisplayCredentials from "./components/DisplayCredentials";
 import NeverSave from "./components/NeverSave";
 import Pending from "./components/Pending";
+import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential, DOMMessage } from "./types";
+import Button from "./ui/forms/Button";
+import { connectSnap, getSnap } from "./utils/snap";
 
 function App() {
   const [pending, handlePending] = useState<Record<string, { url: string; username: string; password: string }>>();
   const [url, handleUrl] = useState<string>();
   const [credentials, handleCredentials] = useState<Credential | null>();
+  const [state, dispatch] = useContext(MetaMaskContext);
 
   useEffect(() => {
     loadPending();
@@ -26,6 +30,22 @@ function App() {
       handleCredentials(creds);
     })();
   }, [url]);
+
+  const connectToMetaMask = async () => {
+    try {
+      await connectSnap();
+      const installedSnap = await getSnap();
+      console.log(installedSnap);
+
+      dispatch({
+        type: MetaMaskActions.SetInstalled,
+        payload: installedSnap
+      });
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetaMaskActions.SetError, payload: e });
+    }
+  };
 
   const loadPending = () => {
     chrome.storage &&
@@ -100,6 +120,8 @@ function App() {
   return (
     <div className="">
       <h1>{url}</h1>
+      {/* disabled={!state.isFlask} */}
+      {!state.installedSnap && <Button onClick={connectToMetaMask}>Connect Snap</Button>}
 
       <div className="">
         <DisplayCredentials url={url} credentials={credentials} handleCredentials={handleCredentials} />
