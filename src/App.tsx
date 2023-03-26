@@ -20,22 +20,22 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!url) {
+    if (!url || !state.installedSnap || !state.isFlask) {
       handleCredentials(undefined);
       return;
     }
 
     (async () => {
       const creds = await requestCredentials(url);
+      console.log(creds);
       handleCredentials(creds);
     })();
-  }, [url]);
+  }, [state.installedSnap, state.isFlask, url]);
 
   const connectToMetaMask = async () => {
     try {
       await connectSnap();
       const installedSnap = await getSnap();
-      console.log(installedSnap);
 
       dispatch({
         type: MetaMaskActions.SetInstalled,
@@ -50,6 +50,7 @@ function App() {
   const loadPending = () => {
     chrome.storage &&
       chrome.storage.local.get("pending").then((pending) => {
+        console.log(pending);
         handlePending(pending.pending);
       });
   };
@@ -60,6 +61,11 @@ function App() {
         let url = tabs[0].url ?? "";
         const idx = url.toString().indexOf("?");
         url = url.toString().slice(0, idx >= 0 ? idx : url.toString().length);
+
+        // Remove trailing slash
+        if (url.at(url.length - 1) === "/") {
+          url = url.substring(0, url.length - 1);
+        }
         handleUrl(url);
       });
   };
@@ -79,8 +85,24 @@ function App() {
                   type: "REQUEST_CREDENTIALS",
                   data: { url: url }
                 } as DOMMessage,
-                (response: Credential) => {
-                  resolve(response);
+                (response: {
+                  data: {
+                    timestamp: number;
+                    neverSave?: boolean | undefined;
+                    logins: {
+                      address?: string;
+                      timestamp: number;
+                      url: string;
+                      username: string;
+                      password: string;
+                    }[];
+                  };
+                }) => {
+                  // TODO: Once I update the snap to return the entire Credential object for a given URL,
+                  // instead of just the logins, change this back to:
+                  // resolve(response?.data ?? undefined);
+                  // @ts-ignore
+                  resolve({ timestamp: 0, neverSave: false, logins: response?.data ?? [] });
                 }
               );
             }
@@ -105,23 +127,27 @@ function App() {
     );
   }
 
-  if (credentials?.neverSave) {
-    return (
-      <div className="">
-        <h1>{url}</h1>
+  // TODO: Incorporate neverSave into new system
+  // if (credentials?.neverSave) {
+  //   return (
+  //     <div className="">
+  //       <h1>{url}</h1>
 
-        <div className="">
-          <NeverSave url={url} credentials={credentials} handleCredentials={handleCredentials} />
-        </div>
-      </div>
-    );
-  }
+  //       <div className="">
+  //         <NeverSave url={url} credentials={credentials} handleCredentials={handleCredentials} />
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="">
       <h1>{url}</h1>
-      {/* disabled={!state.isFlask} */}
-      {!state.installedSnap && <Button onClick={connectToMetaMask}>Connect Snap</Button>}
+      {!state.installedSnap && (
+        <Button onClick={connectToMetaMask} disabled={!state.isFlask}>
+          Connect Snap
+        </Button>
+      )}
 
       <div className="">
         <DisplayCredentials url={url} credentials={credentials} handleCredentials={handleCredentials} />

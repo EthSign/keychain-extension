@@ -1,7 +1,6 @@
 import { createContext, Dispatch, ReactNode, Reducer, useEffect, useReducer } from "react";
 import { Snap } from "../types";
-import { isFlask } from "../utils";
-import { getSnap } from "../utils/snap";
+import { getSnap, isFlask } from "../utils/snap";
 
 export type MetaMaskState = {
   isFlask: boolean;
@@ -87,7 +86,7 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
     if (state.isFlask) {
       detectSnapInstalled();
     }
-  }, [state.isFlask, window.ethereum]);
+  }, [state.isFlask]);
 
   useEffect(() => {
     let timeoutId: number;

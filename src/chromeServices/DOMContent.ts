@@ -1,6 +1,7 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 import { defaultSnapOrigin } from "../config";
 import { GetSnapsResponse, Snap } from "../types";
+import PubSub from "pubsub-js";
 
 const credentials: Record<string, { url: string; username: string; password: string }> = {};
 
@@ -20,19 +21,43 @@ const receiveMessage = (
 
   switch (msg.type) {
     case "PERSIST":
-      chrome.runtime.sendMessage(
-        {
-          type: msg.type,
-          data: {
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          if (data === "OK") {
+            chrome.runtime.sendMessage({ type: "PERSIST", data: { url: msg.data.url } });
+          }
+          resolve(data);
+        };
+        PubSub.subscribe("SET_PASSWORD", listener);
+        window.postMessage(
+          {
+            type: "EthSignKeychainEvent",
+            text: "SET_PASSWORD",
             url: msg.data.url,
             username: msg.data.user.username,
             password: msg.data.user.password
-          }
-        },
-        (response) => sendResponse(response)
-      );
+          },
+          "*" /* targetOrigin: any */
+        );
+      }).then((res) => sendResponse({ data: res }));
+
       return true;
     case "REQUEST_CREDENTIALS":
+      chrome.runtime.sendMessage({ type: "UPDATE_ICON", data: { url: msg.data.url } });
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("GET_PASSWORD", listener);
+        window.postMessage(
+          { type: "EthSignKeychainEvent", text: "GET_PASSWORD", url: msg.data.url },
+          "*" /* targetOrigin: any */
+        );
+      }).then((res) => sendResponse({ data: res }));
+
+      return true;
     case "CLEAR_PENDING_FOR_SITE":
     case "NEVER_SAVE_FOR_SITE":
     case "ENABLE_SAVE_FOR_SITE":
@@ -49,29 +74,39 @@ const receiveMessage = (
       );
       return true;
     case "CONNECT_SNAP":
-      window.postMessage(
-        { type: "EthSignKeychainEvent", text: "Hello from content_script.js!" },
-        "*" /* targetOrigin: any */
-      );
-      // connectSnap("snap:w3ptestsnap").then(() =>
-      //   sendResponse({
-      //     data: "Snap connect request completed"
-      //   })
-      // );
+      new Promise<string>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("CONNECT_SNAP", listener);
+        window.postMessage({ type: "EthSignKeychainEvent", text: "CONNECT_SNAP" }, "*" /* targetOrigin: any */);
+      }).then((res) => sendResponse({ data: res }));
+
+      return true;
+    case "GET_SNAP":
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("GET_SNAP", listener);
+        window.postMessage({ type: "EthSignKeychainEvent", text: "GET_SNAP" }, "*" /* targetOrigin: any */);
+      }).then((res) => sendResponse({ data: res }));
+
+      return true;
+    case "IS_FLASK":
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("IS_FLASK", listener);
+        window.postMessage({ type: "EthSignKeychainEvent", text: "IS_FLASK" }, "*" /* targetOrigin: any */);
+      }).then((res) => sendResponse({ data: res }));
+
       return true;
   }
-
-  //   const headlines = Array.from(document.getElementsByTagName<"h1">("h1")).map((h1) => h1.innerText);
-
-  // Prepare the response object with information about the site
-  //   const response: DOMMessageResponse = {
-  //     title: document.title,
-  //     headlines: tags,
-  //     forms: forms,
-  //     inputs: inputs
-  //   };
-
-  //   sendResponse(response);
 };
 
 /**
@@ -85,9 +120,13 @@ document.addEventListener(
   async (event: any) => {
     if (event.target?.readyState === "complete") {
       // Get window URL and existing credentials (assumes credentials is a single username/password combo)
-      const url = window.location
+      let url = window.location
         .toString()
         .slice(0, window.location.toString().indexOf("?") ?? window.location.toString().length);
+      // Remove trailing slash in url
+      if (url.at(url.length - 1) === "/") {
+        url = url.substring(0, url.length - 1);
+      }
       const credentials: Credential | undefined = await new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
           resolve(response);
@@ -129,13 +168,24 @@ document.addEventListener(
             listenerCreated = true;
             form.submitOrig = form.onsubmit;
             // eslint-disable-next-line no-loop-func
-            form.onsubmit = async (event) => {
+            form.onsubmit = async (event: SubmitEvent) => {
+              event.preventDefault();
               const creds: Credential | undefined = await new Promise((resolve) => {
-                chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
-                  resolve(response);
-                });
+                const listener = (message: string, data: any) => {
+                  PubSub.unsubscribe(listener);
+                  resolve(data);
+                };
+                PubSub.subscribe("GET_PASSWORD", listener);
+                window.postMessage(
+                  { type: "EthSignKeychainEvent", text: "GET_PASSWORD", url: url },
+                  "*" /* targetOrigin: any */
+                );
+                // chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
+                //   resolve(response);
+                // });
               });
-              if (!creds || !creds.neverSave) {
+              console.log(creds);
+              if (!creds) {
                 const tmpInputs = form.getElementsByTagName<"input">("input");
                 let username = "",
                   password = "";
@@ -146,6 +196,7 @@ document.addEventListener(
                     password = tmpInputs[j].value;
                   }
                 }
+                // TODO: Determine what object is in creds and see if we can use it to determine PENDING status
                 // Log url/username/password combo on form submit
                 chrome.runtime.sendMessage({
                   type: "FORM_SUBMIT",
@@ -154,6 +205,7 @@ document.addEventListener(
                   password: password
                 });
               }
+              form.submit();
             };
           }
         }
@@ -171,12 +223,6 @@ s.onload = function () {
   s.remove();
 };
 
-// window.addEventListener("message", function (event) {
-//   if (event.type === "EthSignKeychainEvent") {
-//     console.log("Received ESKE");
-//   }
-// });
-var port = chrome.runtime.connect();
 window.addEventListener(
   "message",
   (event) => {
@@ -185,25 +231,15 @@ window.addEventListener(
       return;
     }
 
-    if (event.data.type && event.data.type === "FROM_PAGE") {
-      console.log("Content script received: " + event.data.text);
-      port.postMessage(event.data.text);
+    if (event.data.type && event.data.type === "ETHSIGN_KEYCHAIN_EVENT") {
+      console.log("Content script received: " + event.data.filter + ": " + JSON.stringify(event.data.text));
+      PubSub.publish(event.data.filter, event.data.text);
     }
   },
   false
 );
 
 // Begin Snaps
-/**
- * Get the installed snaps in MetaMask.
- *
- * @returns The snaps installed in MetaMask.
- */
-export const getSnaps = async (): Promise<GetSnapsResponse> => {
-  return (await window.ethereum.request({
-    method: "wallet_getSnaps"
-  })) as unknown as GetSnapsResponse;
-};
 
 /**
  * Connect a snap to MetaMask.
@@ -222,23 +258,6 @@ export const connectSnap = async (
       [snapId]: params
     }
   });
-};
-
-/**
- * Get the snap from MetaMask.
- *
- * @param version - The version of the snap to install (optional).
- * @returns The snap object returned by the extension.
- */
-export const getSnap = async (version?: string): Promise<Snap | undefined> => {
-  try {
-    const snaps = await getSnaps();
-
-    return Object.values(snaps).find((snap) => snap.id === defaultSnapOrigin && (!version || snap.version === version));
-  } catch (e) {
-    console.log("Failed to obtain installed snap", e);
-    return undefined;
-  }
 };
 
 /**

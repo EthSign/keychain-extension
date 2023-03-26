@@ -9,7 +9,8 @@ export type DOMMessage = {
     | "NEVER_SAVE_FOR_SITE"
     | "ENABLE_SAVE_FOR_SITE"
     | "CONNECT_SNAP"
-    | "GET_SNAP";
+    | "GET_SNAP"
+    | "IS_FLASK";
   login: any;
   action: any;
   settings: any;
@@ -30,7 +31,7 @@ export type DOMMessageResponse = {
 };
 
 export type Credential = {
-  url: string;
+  timestamp: number;
   neverSave?: boolean;
-  logins: { username: string; password: string }[];
+  logins: { address?: string; timestamp: number; url: string; username: string; password: string }[];
 };

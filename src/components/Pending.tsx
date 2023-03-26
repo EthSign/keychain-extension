@@ -72,10 +72,12 @@ function Pending(props: PendingProps) {
           chrome.tabs.sendMessage(
             tabs[0].id || 0,
             { type: "PERSIST", data: { url: url, user: pending[url] } } as DOMMessage,
-            (response: DOMMessageResponse) => {
-              const tempPending = Object.assign({}, pending, { url: undefined });
-              handlePending(tempPending);
-              window.close();
+            (response: DOMMessageResponse | any) => {
+              if (response === "OK") {
+                const tempPending = Object.assign({}, pending, { url: undefined });
+                handlePending(tempPending);
+                window.close();
+              }
             }
           );
         }

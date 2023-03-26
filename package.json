@@ -13,6 +13,7 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "lodash": "^4.17.21",
+    "pubsub-js": "^1.9.4",
     "react": "^18.2.0",
     "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "^18.2.0",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@types/chrome": "^0.0.213",
     "@types/lodash": "^4.14.191",
+    "@types/pubsub-js": "^1.8.3",
     "@types/react-copy-to-clipboard": "^5.0.4",
     "tailwindcss": "^3.2.6"
   }

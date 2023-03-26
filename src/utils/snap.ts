@@ -47,3 +47,27 @@ export const getSnap = async () => {
       : resolve(undefined);
   });
 };
+
+export const isFlask = async () => {
+  return new Promise<boolean | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "IS_FLASK"
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? false);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
