@@ -63,6 +63,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         });
       }
     });
+    return false;
   } else if (request.type === "REMOVE") {
     // const idx = _.findIndex(credentials[request.data.url].logins, { username: request.data.username });
     // if (idx >= 0) {
@@ -78,21 +79,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     //     logins: credentials[request.data.url].logins
     //   });
   } else if (request.type === "CLEAR_PENDING_FOR_SITE") {
-    //   chrome.storage.local.get("pending").then((obj) => {
-    //     if (!obj) {
-    //       obj = {};
-    //     } else {
-    //       obj = obj.pending;
-    //     }
-    //     if (obj[request.data.url]) {
-    //       obj[request.data.url] = undefined;
-    //       chrome.storage.local.set({ pending: obj }).then(() => {
-    //         updateExtensionIcon(request.data.url);
-    //       });
-    //     }
-    //     sendResponse({ success: true });
-    //   });
-    //   return true;
+    chrome.storage.local.get("pending").then((obj) => {
+      if (!obj) {
+        obj = {};
+      } else {
+        obj = obj.pending;
+      }
+      if (obj[request.data.url]) {
+        obj[request.data.url] = undefined;
+        chrome.storage.local.set({ pending: obj }).then(() => {
+          updateExtensionIcon(request.data.url);
+        });
+      }
+      sendResponse({ success: true });
+    });
+    return true;
   } else if (request.type === "NEVER_SAVE_FOR_SITE") {
     // Clear pending
     // chrome.storage.local.get("pending").then((obj) => {
@@ -132,6 +133,10 @@ async function getTabBaseUrl(tabId: number) {
 async function updateExtensionIcon(tabUrl: string) {
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = tabUrl.toString().slice(0, tabUrl.toString().indexOf("?") ?? tabUrl.toString().length);
+  // Remove trailing slash in url
+  if (url.at(url.length - 1) === "/") {
+    url = url.substring(0, url.length - 1);
+  }
   if (obj.pending && obj.pending[url]) {
     chrome.action.setTitle({ title: "Open Web3Pass" });
     chrome.action.setIcon({ path: "/images.png" });

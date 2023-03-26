@@ -73,7 +73,7 @@ function Pending(props: PendingProps) {
             tabs[0].id || 0,
             { type: "PERSIST", data: { url: url, user: pending[url] } } as DOMMessage,
             (response: DOMMessageResponse | any) => {
-              if (response === "OK") {
+              if (response?.data === "OK") {
                 const tempPending = Object.assign({}, pending, { url: undefined });
                 handlePending(tempPending);
                 window.close();

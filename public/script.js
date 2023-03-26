@@ -91,6 +91,19 @@ const setPassword = async (url, username, password) => {
   });
 }
 
+const removePassword = async (url, username) => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: DEFAULT_SNAP_ID,
+      request: {
+        method: 'remove_password',
+        params: { website: url, username: username },
+      },
+    },
+  });
+}
+
 window.addEventListener("message", function (event) {
   if(event.data.type && event.data.type === "EthSignKeychainEvent") {
     switch(event.data.text) {
@@ -109,19 +122,24 @@ window.addEventListener("message", function (event) {
       case "GET_SNAP":
         getSnap().then((res) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "GET_SNAP", text: res})
-        })
+        });
         break;
       case "GET_PASSWORD":
         getPassword(event.data.url).then((res) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "GET_PASSWORD", text: res})
         }).catch((err) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "GET_PASSWORD", text: err.message})
-        })
+        });
         break;
       case "SET_PASSWORD":
         setPassword(event.data.url, event.data.username, event.data.password).then((res) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "SET_PASSWORD", text: res})
-        })
+        });
+        break;
+      case "REMOVE_PASSWORD":
+        removePassword(event.data.url, event.data.username).then((res) => {
+          this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "REMOVE_PASSWORD", text: res})
+        });
         break;
       default: break;
     }

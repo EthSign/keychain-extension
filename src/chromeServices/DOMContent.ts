@@ -25,7 +25,19 @@ const receiveMessage = (
         const listener = (message: string, data: any) => {
           PubSub.unsubscribe(listener);
           if (data === "OK") {
-            chrome.runtime.sendMessage({ type: "PERSIST", data: { url: msg.data.url } });
+            chrome.storage.local.get("pending").then((obj) => {
+              if (!obj) {
+                obj = {};
+              } else {
+                obj = obj.pending;
+              }
+              if (obj[msg.data.url]) {
+                obj[msg.data.url] = undefined;
+                chrome.storage.local.set({ pending: obj }).then(() => {
+                  chrome.runtime.sendMessage({ type: "UPDATE_ICON", data: { url: msg.data.url } });
+                });
+              }
+            });
           }
           resolve(data);
         };
@@ -40,7 +52,9 @@ const receiveMessage = (
           },
           "*" /* targetOrigin: any */
         );
-      }).then((res) => sendResponse({ data: res }));
+      }).then((res) => {
+        sendResponse({ data: res });
+      });
 
       return true;
     case "REQUEST_CREDENTIALS":
@@ -66,12 +80,23 @@ const receiveMessage = (
       });
       return true;
     case "REMOVE":
-      chrome.runtime.sendMessage(
-        { type: msg.type, data: { url: msg.data.url, username: msg.data.username } },
-        (response) => {
-          sendResponse(response);
-        }
-      );
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("REMOVE_PASSWORD", listener);
+        window.postMessage(
+          { type: "EthSignKeychainEvent", text: "REMOVE_PASSWORD", url: msg.data.url, username: msg.data.username },
+          "*" /* targetOrigin: any */
+        );
+      }).then((res) => sendResponse({ data: res }));
+      // chrome.runtime.sendMessage(
+      //   { type: msg.type, data: { url: msg.data.url, username: msg.data.username } },
+      //   (response) => {
+      //     sendResponse(response);
+      //   }
+      // );
       return true;
     case "CONNECT_SNAP":
       new Promise<string>((resolve) => {
@@ -185,7 +210,10 @@ document.addEventListener(
                 // });
               });
               console.log(creds);
-              if (!creds) {
+              // TODO: creds is currently an array. We will need to update this to a real credential object
+              // and update the if statement accordingly. (Likely support multiple password logins, using findIndex)
+              // @ts-ignore
+              if (!creds || creds.length === 0) {
                 const tmpInputs = form.getElementsByTagName<"input">("input");
                 let username = "",
                   password = "";

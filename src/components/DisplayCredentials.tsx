@@ -28,7 +28,7 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
               data: { url: url, username: username }
             } as DOMMessage,
             (response) => {
-              if (response.success) {
+              if (response?.data === "OK") {
                 const tmpCred = Object.assign({}, credentials);
                 if (tmpCred && tmpCred.logins) {
                   const idx = _.findIndex(tmpCred.logins, { username: username });
