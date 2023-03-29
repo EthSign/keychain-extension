@@ -24,9 +24,9 @@ function NeverSave(props: NeverSaveProps) {
         (tabs) => {
           chrome.tabs.sendMessage(
             tabs[0].id || 0,
-            { type: "ENABLE_SAVE_FOR_SITE", data: { url: url } } as DOMMessage,
+            { type: "SET_NEVER_SAVE", data: { url: url, neverSave: false } } as DOMMessage,
             (response: DOMMessageResponse) => {
-              if (response.success) {
+              if (response?.data === "OK") {
                 // Set neverSave to false locally since we successfully changed the db
                 handleCredentials(Object.assign({}, credentials, { neverSave: false }));
               }

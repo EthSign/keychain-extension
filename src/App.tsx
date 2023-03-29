@@ -9,7 +9,8 @@ import Button from "./ui/forms/Button";
 import { connectSnap, getSnap } from "./utils/snap";
 
 function App() {
-  const [pending, handlePending] = useState<Record<string, { url: string; username: string; password: string }>>();
+  const [pending, handlePending] =
+    useState<Record<string, { url: string; username: string; password: string; update?: boolean }>>();
   const [url, handleUrl] = useState<string>();
   const [credentials, handleCredentials] = useState<Credential | null>();
   const [state, dispatch] = useContext(MetaMaskContext);
@@ -20,7 +21,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!url || !state.installedSnap || !state.isFlask) {
+    if (!url || !state.installedSnap || Object.keys(state.installedSnap).length === 0 || !state.isFlask) {
       handleCredentials(undefined);
       return;
     }
@@ -50,7 +51,6 @@ function App() {
   const loadPending = () => {
     chrome.storage &&
       chrome.storage.local.get("pending").then((pending) => {
-        console.log(pending);
         handlePending(pending.pending);
       });
   };
@@ -98,11 +98,7 @@ function App() {
                     }[];
                   };
                 }) => {
-                  // TODO: Once I update the snap to return the entire Credential object for a given URL,
-                  // instead of just the logins, change this back to:
-                  // resolve(response?.data ?? undefined);
-                  // @ts-ignore
-                  resolve({ timestamp: 0, neverSave: false, logins: response?.data ?? [] });
+                  resolve(response?.data ?? undefined);
                 }
               );
             }
@@ -116,34 +112,27 @@ function App() {
       <div className="">
         <h1>{url}</h1>
 
-        <Pending
-          url={url}
-          username={pending[url].username}
-          password={pending[url].password}
-          pending={pending}
-          handlePending={handlePending}
-        />
+        <Pending url={url} pending={pending} handlePending={handlePending} />
       </div>
     );
   }
 
-  // TODO: Incorporate neverSave into new system
-  // if (credentials?.neverSave) {
-  //   return (
-  //     <div className="">
-  //       <h1>{url}</h1>
+  if (credentials?.neverSave) {
+    return (
+      <div className="">
+        <h1>{url}</h1>
 
-  //       <div className="">
-  //         <NeverSave url={url} credentials={credentials} handleCredentials={handleCredentials} />
-  //       </div>
-  //     </div>
-  //   );
-  // }
+        <div className="">
+          <NeverSave url={url} credentials={credentials} handleCredentials={handleCredentials} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="">
       <h1>{url}</h1>
-      {!state.installedSnap && (
+      {Object.keys(state.installedSnap ?? {}).length === 0 && (
         <Button onClick={connectToMetaMask} disabled={!state.isFlask}>
           Connect Snap
         </Button>

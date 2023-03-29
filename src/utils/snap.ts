@@ -71,3 +71,27 @@ export const isFlask = async () => {
       : resolve(undefined);
   });
 };
+
+export const sendSync = async () => {
+  return new Promise<boolean | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "SYNC"
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? false);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};

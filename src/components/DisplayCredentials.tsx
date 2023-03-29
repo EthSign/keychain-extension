@@ -3,6 +3,7 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import Button from "../ui/forms/Button";
 import _ from "lodash";
 import CredentialRow from "./CredentialRow";
+import { sendSync } from "../utils/snap";
 
 interface DisplayCredentialsProps {
   url?: string;
@@ -46,6 +47,7 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
 
   return (
     <div className="flex flex-col">
+      <Button onClick={sendSync}>Sync</Button>
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
         <div>
           {credentials.logins.map((cred, idx) => (

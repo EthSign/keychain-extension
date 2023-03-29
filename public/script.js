@@ -1,4 +1,5 @@
 const DEFAULT_SNAP_ID = "npm:w3ptestsnap";
+const SNAP_VERSION = "0.1.3";
 
 /**
  * Detect if the wallet injecting the ethereum object is Flask.
@@ -104,6 +105,31 @@ const removePassword = async (url, username) => {
   });
 }
 
+const sync = async () => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: DEFAULT_SNAP_ID,
+      request: {
+        method: 'sync',
+      },
+    },
+  });
+}
+
+const setNeverSave = async (url, neverSave) => {
+  return await window.ethereum.request({
+    method: "wallet_invokeSnap",
+    params: {
+      snapId: DEFAULT_SNAP_ID,
+      request: {
+        method: "set_neversave",
+        params: { website: url, neverSave: neverSave }
+      }
+    }
+  });
+}
+
 window.addEventListener("message", function (event) {
   if(event.data.type && event.data.type === "EthSignKeychainEvent") {
     switch(event.data.text) {
@@ -115,12 +141,12 @@ window.addEventListener("message", function (event) {
         });
         break;
       case "CONNECT_SNAP":
-        connectSnap("npm:w3ptestsnap").then(() => {
+        connectSnap(`${DEFAULT_SNAP_ID}`, { version: SNAP_VERSION }).then(() => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "CONNECT_SNAP", text: "Snap connect request completed"});
         }).catch((err) => {this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "CONNECT_SNAP", text: "Failed to connect snap: " + err ? err.message : "Unknown error"});});
         break;
       case "GET_SNAP":
-        getSnap().then((res) => {
+        getSnap(SNAP_VERSION).then((res) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "GET_SNAP", text: res})
         });
         break;
@@ -139,6 +165,16 @@ window.addEventListener("message", function (event) {
       case "REMOVE_PASSWORD":
         removePassword(event.data.url, event.data.username).then((res) => {
           this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "REMOVE_PASSWORD", text: res})
+        });
+        break;
+      case "SYNC":
+        sync().then((res) => {
+          this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "SYNC", text: res})
+        });
+        break;
+      case "SET_NEVER_SAVE":
+        setNeverSave(event.data.url, event.data.neverSave).then((res) => {
+          this.window.postMessage({type: "ETHSIGN_KEYCHAIN_EVENT", filter: "SET_NEVER_SAVE", text: res})
         });
         break;
       default: break;

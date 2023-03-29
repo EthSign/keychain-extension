@@ -3,8 +3,6 @@ import { defaultSnapOrigin } from "../config";
 import { GetSnapsResponse, Snap } from "../types";
 import PubSub from "pubsub-js";
 
-const credentials: Record<string, { url: string; username: string; password: string }> = {};
-
 // Function called when a new message is received
 const receiveMessage = (
   msg: DOMMessage,
@@ -25,19 +23,7 @@ const receiveMessage = (
         const listener = (message: string, data: any) => {
           PubSub.unsubscribe(listener);
           if (data === "OK") {
-            chrome.storage.local.get("pending").then((obj) => {
-              if (!obj) {
-                obj = {};
-              } else {
-                obj = obj.pending;
-              }
-              if (obj[msg.data.url]) {
-                obj[msg.data.url] = undefined;
-                chrome.storage.local.set({ pending: obj }).then(() => {
-                  chrome.runtime.sendMessage({ type: "UPDATE_ICON", data: { url: msg.data.url } });
-                });
-              }
-            });
+            chrome.runtime.sendMessage({ type: "CLEAR_PENDING_FOR_SITE", data: { url: msg.data.url, return: false } });
           }
           resolve(data);
         };
@@ -73,11 +59,25 @@ const receiveMessage = (
 
       return true;
     case "CLEAR_PENDING_FOR_SITE":
-    case "NEVER_SAVE_FOR_SITE":
-    case "ENABLE_SAVE_FOR_SITE":
-      chrome.runtime.sendMessage({ type: msg.type, data: { url: msg.data.url } }, (response) => {
+      chrome.runtime.sendMessage({ type: msg.type, data: { url: msg.data.url, return: true } }, (response) => {
         sendResponse(response);
       });
+      return true;
+    case "SET_NEVER_SAVE":
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("SET_NEVER_SAVE", listener);
+        if (msg.data.neverSave) {
+          chrome.runtime.sendMessage({ type: "CLEAR_PENDING_FOR_SITE", data: { url: msg.data.url, return: false } });
+        }
+        window.postMessage(
+          { type: "EthSignKeychainEvent", text: "SET_NEVER_SAVE", url: msg.data.url, neverSave: msg.data.neverSave },
+          "*" /* targetOrigin: any */
+        );
+      }).then((res) => sendResponse({ data: res }));
       return true;
     case "REMOVE":
       new Promise<any>((resolve) => {
@@ -91,12 +91,6 @@ const receiveMessage = (
           "*" /* targetOrigin: any */
         );
       }).then((res) => sendResponse({ data: res }));
-      // chrome.runtime.sendMessage(
-      //   { type: msg.type, data: { url: msg.data.url, username: msg.data.username } },
-      //   (response) => {
-      //     sendResponse(response);
-      //   }
-      // );
       return true;
     case "CONNECT_SNAP":
       new Promise<string>((resolve) => {
@@ -128,6 +122,17 @@ const receiveMessage = (
         };
         PubSub.subscribe("IS_FLASK", listener);
         window.postMessage({ type: "EthSignKeychainEvent", text: "IS_FLASK" }, "*" /* targetOrigin: any */);
+      }).then((res) => sendResponse({ data: res }));
+
+      return true;
+    case "SYNC":
+      new Promise<any>((resolve) => {
+        const listener = (message: string, data: any) => {
+          PubSub.unsubscribe(listener);
+          resolve(data);
+        };
+        PubSub.subscribe("SYNC", listener);
+        window.postMessage({ type: "EthSignKeychainEvent", text: "SYNC" }, "*" /* targetOrigin: any */);
       }).then((res) => sendResponse({ data: res }));
 
       return true;
@@ -205,15 +210,8 @@ document.addEventListener(
                   { type: "EthSignKeychainEvent", text: "GET_PASSWORD", url: url },
                   "*" /* targetOrigin: any */
                 );
-                // chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
-                //   resolve(response);
-                // });
               });
-              console.log(creds);
-              // TODO: creds is currently an array. We will need to update this to a real credential object
-              // and update the if statement accordingly. (Likely support multiple password logins, using findIndex)
-              // @ts-ignore
-              if (!creds || creds.length === 0) {
+              if (!creds || !creds.neverSave) {
                 const tmpInputs = form.getElementsByTagName<"input">("input");
                 let username = "",
                   password = "";
@@ -224,13 +222,13 @@ document.addEventListener(
                     password = tmpInputs[j].value;
                   }
                 }
-                // TODO: Determine what object is in creds and see if we can use it to determine PENDING status
                 // Log url/username/password combo on form submit
                 chrome.runtime.sendMessage({
                   type: "FORM_SUBMIT",
                   url: url,
                   username: username,
-                  password: password
+                  password: password,
+                  credentials: creds
                 });
               }
               form.submit();

@@ -10,6 +10,7 @@ export type MetaMaskState = {
 
 const initialState: MetaMaskState = {
   isFlask: false,
+  installedSnap: undefined,
   error: undefined
 };
 
@@ -33,7 +34,7 @@ const reducer: Reducer<MetaMaskState, MetaMaskDispatch> = (state, action) => {
     case MetaMaskActions.SetInstalled:
       return {
         ...state,
-        installedSnap: action.payload
+        installedSnap: action?.payload ?? undefined
       };
 
     case MetaMaskActions.SetFlaskDetected:

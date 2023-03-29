@@ -6,11 +6,11 @@ export type DOMMessage = {
     | "REMOVE"
     | "CLEAR_PENDING_FOR_SITE"
     | "REQUEST_CREDENTIALS"
-    | "NEVER_SAVE_FOR_SITE"
-    | "ENABLE_SAVE_FOR_SITE"
+    | "SET_NEVER_SAVE"
     | "CONNECT_SNAP"
     | "GET_SNAP"
-    | "IS_FLASK";
+    | "IS_FLASK"
+    | "SYNC";
   login: any;
   action: any;
   settings: any;
