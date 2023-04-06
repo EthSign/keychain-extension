@@ -150,13 +150,13 @@ document.addEventListener(
   async (event: any) => {
     if (event.target?.readyState === "complete") {
       // Get window URL and existing credentials (assumes credentials is a single username/password combo)
-      let url = window.location
-        .toString()
-        .slice(0, window.location.toString().indexOf("?") ?? window.location.toString().length);
+      const qIdx = window.location.toString().indexOf("?");
+      let url = window.location.toString().slice(0, qIdx >= 0 ? qIdx : window.location.toString().length);
       // Remove trailing slash in url
       if (url.at(url.length - 1) === "/") {
         url = url.substring(0, url.length - 1);
       }
+      // TODO: This won't work
       const credentials: Credential | undefined = await new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
           resolve(response);
@@ -200,7 +200,7 @@ document.addEventListener(
             // eslint-disable-next-line no-loop-func
             form.onsubmit = async (event: SubmitEvent) => {
               event.preventDefault();
-              const creds: Credential | undefined = await new Promise((resolve) => {
+              const creds: Credential | null = await new Promise((resolve) => {
                 const listener = (message: string, data: any) => {
                   PubSub.unsubscribe(listener);
                   resolve(data);

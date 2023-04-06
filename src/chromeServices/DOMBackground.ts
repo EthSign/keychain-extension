@@ -15,11 +15,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         obj = obj.pending;
       }
       const idx =
-        request.credentials !== undefined
+        request.credentials && request.credentials.logins
           ? _.findIndex(request.credentials.logins, { username: request.username, password: request.password })
           : -1;
       const idxU =
-        request.credentials !== undefined
+        request.credentials && request.credentials.logins
           ? _.findIndex(request.credentials.logins, { username: request.username })
           : -1;
       if (idx < 0) {
@@ -53,7 +53,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       return true;
     }
   } else if (request.type === "UPDATE_ICON") {
-    updateExtensionIcon(request.url);
+    updateExtensionIcon(request.data.url);
+  } else {
+    sendResponse(request.type + " method not supported.");
   }
 });
 
