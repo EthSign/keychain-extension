@@ -50,6 +50,9 @@
     "@types/lodash": "^4.14.191",
     "@types/pubsub-js": "^1.8.3",
     "@types/react-copy-to-clipboard": "^5.0.4",
+    "buffer": "npm:buffer",
+    "process": "^0.11.10",
+    "stream": "npm:stream-browserify",
     "tailwindcss": "^3.2.6"
   }
 }

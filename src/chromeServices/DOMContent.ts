@@ -2,8 +2,18 @@ import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 import { defaultSnapOrigin } from "../config";
 import { GetSnapsResponse, Snap } from "../types";
 import PubSub from "pubsub-js";
+import { createExternalExtensionProvider } from "@metamask/providers";
 
-// Function called when a new message is received
+const DEFAULT_SNAP_ID = "npm:w3ptestsnap";
+const SNAP_VERSION = "0.1.3";
+
+/**
+ * Function called when a new message is received
+ * @param msg Message we receive.
+ * @param sender Sender of the message.
+ * @param sendResponse Callback for sending a response message to sender.
+ * @returns
+ */
 const receiveMessage = (
   msg: DOMMessage,
   sender: chrome.runtime.MessageSender,
@@ -94,12 +104,22 @@ const receiveMessage = (
       return true;
     case "CONNECT_SNAP":
       new Promise<string>((resolve) => {
-        const listener = (message: string, data: any) => {
-          PubSub.unsubscribe(listener);
-          resolve(data);
-        };
-        PubSub.subscribe("CONNECT_SNAP", listener);
-        window.postMessage({ type: "EthSignKeychainEvent", text: "CONNECT_SNAP" }, "*" /* targetOrigin: any */);
+        // This will invoke CONNECT_SNAP on the current page's injected script
+        // const listener = (message: string, data: any) => {
+        //   PubSub.unsubscribe(listener);
+        //   resolve(data);
+        // };
+        // PubSub.subscribe("CONNECT_SNAP", listener);
+        // window.postMessage({ type: "EthSignKeychainEvent", text: "CONNECT_SNAP" }, "*" /* targetOrigin: any */);
+
+        // Trying to connect the snap from this extension directly instead of going through the injected script
+        connectSnap(`${DEFAULT_SNAP_ID}`, { version: SNAP_VERSION })
+          .then(() => {
+            resolve("Snap connect request completed");
+          })
+          .catch((err) => {
+            resolve("Failed to connect snap: " + err ? err.message : "Unknown error");
+          });
       }).then((res) => sendResponse({ data: res }));
 
       return true;
@@ -144,7 +164,9 @@ const receiveMessage = (
  */
 chrome.runtime.onMessage.addListener(receiveMessage);
 
-// Listens for form submissions. Will check for inputs of name "username" and "password".
+/**
+ * Listens for form submissions. Will check for inputs of name "username" and "password".
+ */
 document.addEventListener(
   "readystatechange",
   async (event: any) => {
@@ -156,7 +178,7 @@ document.addEventListener(
       if (url.at(url.length - 1) === "/") {
         url = url.substring(0, url.length - 1);
       }
-      // TODO: This won't work
+      // TODO: This won't work for prod. Need to restructure the data.
       const credentials: Credential | undefined = await new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
           resolve(response);
@@ -241,7 +263,9 @@ document.addEventListener(
   false
 );
 
-// Inject script
+/**
+ * Inject script
+ */
 var s = document.createElement("script");
 s.src = chrome.runtime.getURL("/script.js");
 (document.head || document.documentElement).appendChild(s);
@@ -277,8 +301,9 @@ export const connectSnap = async (
   snapId: string = defaultSnapOrigin,
   params: Record<"version" | string, unknown> = {}
 ) => {
-  console.log("window.ethereum: " + window.ethereum);
-  await window.ethereum.request({
+  const provider = createExternalExtensionProvider();
+  console.log("provider: " + JSON.stringify(provider));
+  await provider.request({
     method: "wallet_requestSnaps",
     params: {
       [snapId]: params
@@ -286,44 +311,41 @@ export const connectSnap = async (
   });
 };
 
-/**
- * Invoke the "hello" method from the example snap.
- */
+// Will be converting injected snap function calls to local calls here
+// export const sendSet = async () => {
+//   return await window.ethereum.request({
+//     method: "wallet_invokeSnap",
+//     params: {
+//       snapId: defaultSnapOrigin,
+//       request: {
+//         method: "set_password",
+//         params: { website: "localhost:8000", username: "username", password: "password" }
+//       }
+//     }
+//   });
+// };
 
-export const sendSet = async () => {
-  return await window.ethereum.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: defaultSnapOrigin,
-      request: {
-        method: "set_password",
-        params: { website: "localhost:8000", username: "username", password: "password" }
-      }
-    }
-  });
-};
+// export const sendGet = async () => {
+//   return await window.ethereum.request({
+//     method: "wallet_invokeSnap",
+//     params: {
+//       snapId: defaultSnapOrigin,
+//       request: { method: "get_password", params: { website: "localhost:8000" } }
+//     }
+//   });
+// };
 
-export const sendGet = async () => {
-  return await window.ethereum.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: defaultSnapOrigin,
-      request: { method: "get_password", params: { website: "localhost:8000" } }
-    }
-  });
-};
-
-export const sendRemove = async () => {
-  return await window.ethereum.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: defaultSnapOrigin,
-      request: {
-        method: "remove_password",
-        params: { website: "localhost:8000", username: "username" }
-      }
-    }
-  });
-};
+// export const sendRemove = async () => {
+//   return await window.ethereum.request({
+//     method: "wallet_invokeSnap",
+//     params: {
+//       snapId: defaultSnapOrigin,
+//       request: {
+//         method: "remove_password",
+//         params: { website: "localhost:8000", username: "username" }
+//       }
+//     }
+//   });
+// };
 
 export const isLocalSnap = (snapId: string) => snapId.startsWith("local:");

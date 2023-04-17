@@ -4,7 +4,9 @@ import { Credential } from "../types";
 
 let activeTabId: number;
 
-// Handle requests for passwords
+/**
+ * Handle requests for passwords
+ */
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log("[background.js]. Message received", request);
   if (request.type === "FORM_SUBMIT") {
@@ -59,7 +61,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   }
 });
 
-// Get tab URL
+/**
+ * Get tab URL
+ * @param tabId Tab ID to get the URL for
+ * @returns
+ */
 async function getTabBaseUrl(tabId: number) {
   return new Promise<string>((resolve, reject) => {
     chrome.tabs.get(tabId, function (tab) {
@@ -68,7 +74,10 @@ async function getTabBaseUrl(tabId: number) {
   });
 }
 
-// Update the icon of the extension depending on status
+/**
+ * Update the icon of the extension depending on current pending status
+ * @param tabUrl Current URL to check pending status for
+ */
 async function updateExtensionIcon(tabUrl: string) {
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = tabUrl.toString().slice(0, tabUrl.toString().indexOf("?") ?? tabUrl.toString().length);
@@ -87,19 +96,25 @@ async function updateExtensionIcon(tabUrl: string) {
   }
 }
 
-// Listen for when a tab activates
+/**
+ * Listen for when a tab activates
+ */
 chrome.tabs.onActivated.addListener(async function (activeInfo) {
   updateExtensionIcon(await getTabBaseUrl((activeTabId = activeInfo.tabId)));
 });
 
-// Listen for when a tab updates
+/**
+ * Listen for when a tab updates
+ */
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (activeTabId === tabId) {
     updateExtensionIcon(await getTabBaseUrl((activeTabId = tabId)));
   }
 });
 
-// Listen for window changes (to get the current focused tab)
+/**
+ * Listen for window changes (to get the current focused tab)
+ */
 chrome.windows.onFocusChanged.addListener(async function (windowId: number) {
   if (windowId !== chrome.windows.WINDOW_ID_NONE) {
     const [tab] = await chrome.tabs.query({ active: true, windowId: windowId });

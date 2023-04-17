@@ -1,5 +1,9 @@
 import { DOMMessage } from "../types";
 
+/**
+ * Call to content script for connecting to our snap.
+ * @returns
+ */
 export const connectSnap = async () => {
   return new Promise<any | undefined>((resolve) => {
     chrome.tabs
@@ -24,6 +28,10 @@ export const connectSnap = async () => {
   });
 };
 
+/**
+ * Call to our content script for getting our snap.
+ * @returns
+ */
 export const getSnap = async () => {
   return new Promise<any | undefined>((resolve) => {
     chrome.tabs
@@ -48,6 +56,10 @@ export const getSnap = async () => {
   });
 };
 
+/**
+ * Call to our content script to determine if MetaMask Flask is installed.
+ * @returns
+ */
 export const isFlask = async () => {
   return new Promise<boolean | undefined>((resolve) => {
     chrome.tabs
@@ -72,6 +84,10 @@ export const isFlask = async () => {
   });
 };
 
+/**
+ * Call to our content script to sync local state with remote Arweave state.
+ * @returns
+ */
 export const sendSync = async () => {
   return new Promise<boolean | undefined>((resolve) => {
     chrome.tabs

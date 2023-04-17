@@ -7,6 +7,7 @@ import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential, DOMMessage } from "./types";
 import Button from "./ui/forms/Button";
 import { connectSnap, getSnap } from "./utils/snap";
+import { createExternalExtensionProvider } from "@metamask/providers";
 
 function App() {
   const [pending, handlePending] =
@@ -34,10 +35,11 @@ function App() {
   }, [state.installedSnap, state.isFlask, url]);
 
   const connectToMetaMask = async () => {
+    // const provider = createExternalExtensionProvider();
+    // console.log("provider: " + provider);
     try {
       await connectSnap();
       const installedSnap = await getSnap();
-
       dispatch({
         type: MetaMaskActions.SetInstalled,
         payload: installedSnap
@@ -52,6 +54,7 @@ function App() {
     chrome.storage &&
       chrome.storage.local.get("pending").then((pending) => {
         handlePending(pending.pending);
+        // console.log(pending.pending);
       });
   };
 

@@ -1,3 +1,4 @@
+const webpack = require("webpack");
 module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
@@ -18,7 +19,13 @@ module.exports = {
         optimization: {
           ...webpackConfig.optimization,
           runtimeChunk: false
-        }
+        },
+        plugins: (webpackConfig.plugins || []).concat([
+          new webpack.ProvidePlugin({
+            process: "process/browser",
+            Buffer: ["buffer", "Buffer"]
+          })
+        ])
       };
     }
   }

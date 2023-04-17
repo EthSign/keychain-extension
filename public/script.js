@@ -69,6 +69,11 @@ const getSnap = async (version) => {
   }
 };
 
+/**
+ * Gets the password state for a given URL.
+ * @param {*} url The URL to get the password state for.
+ * @returns 
+ */
 const getPassword = async (url) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -79,6 +84,13 @@ const getPassword = async (url) => {
   });
 }
 
+/**
+ * Update the password state for a given URL, username, and password combination.
+ * @param {*} url The URL to set a password for.
+ * @param {*} username The username to set a password for.
+ * @param {*} password The password to set.
+ * @returns 
+ */
 const setPassword = async (url, username, password) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -92,6 +104,12 @@ const setPassword = async (url, username, password) => {
   });
 }
 
+/**
+ * Remove a password entry from a URL's state given its corresponding username.
+ * @param {*} url The URL to remove a password from.
+ * @param {*} username The username to remove a password for.
+ * @returns 
+ */
 const removePassword = async (url, username) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -105,6 +123,10 @@ const removePassword = async (url, username) => {
   });
 }
 
+/**
+ * Sync local password state with remote Arweave state.
+ * @returns
+ */
 const sync = async () => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -117,6 +139,12 @@ const sync = async () => {
   });
 }
 
+/**
+ * Set whether or not we should save passwords for a given url.
+ * @param {*} url URL for state we are trying to update.
+ * @param {*} neverSave Boolean value for whether or not we should save the password state.
+ * @returns 
+ */
 const setNeverSave = async (url, neverSave) => {
   return await window.ethereum.request({
     method: "wallet_invokeSnap",
@@ -130,6 +158,9 @@ const setNeverSave = async (url, neverSave) => {
   });
 }
 
+/**
+ * Listen for messages from our content script
+ */
 window.addEventListener("message", function (event) {
   if(event.data.type && event.data.type === "EthSignKeychainEvent") {
     switch(event.data.text) {
