@@ -82,7 +82,9 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
-    detectFlask();
+    if (!state.isFlask) {
+      detectFlask();
+    }
 
     if (state.isFlask) {
       detectSnapInstalled();

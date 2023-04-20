@@ -40,6 +40,7 @@ function App() {
     try {
       await connectSnap();
       const installedSnap = await getSnap();
+      console.log(installedSnap);
       dispatch({
         type: MetaMaskActions.SetInstalled,
         payload: installedSnap
