@@ -3,7 +3,7 @@ import _ from "lodash";
 import { createExternalExtensionProvider } from "@metamask/providers";
 
 const DEFAULT_SNAP_ID = "npm:w3ptestsnap"; // "local:http://localhost:8081";
-const SNAP_VERSION = "0.1.9";
+const SNAP_VERSION = "0.2.0";
 let activeTabId: number;
 
 /// Begin snap functions
