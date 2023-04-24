@@ -47,7 +47,7 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
 
   return (
     <div className="flex flex-col">
-      <Button onClick={sendSync}>Sync</Button>
+      <Button onClick={async () => console.log(await sendSync())}>Sync</Button>
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
         <div>
           {credentials.logins.map((cred, idx) => (
