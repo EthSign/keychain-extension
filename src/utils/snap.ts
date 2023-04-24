@@ -103,8 +103,7 @@ export const sendSync = async () => {
                 type: "SYNC"
               } as DOMMessage,
               (response: any) => {
-                resolve(response);
-                // resolve(response?.data ?? false);
+                resolve(response?.data ?? false);
               }
             );
           }
