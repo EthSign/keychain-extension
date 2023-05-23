@@ -19,7 +19,7 @@ try {
  * Request user to log into their MetaMask if they are not connected to this extension
  */
 const checkProviderStatus = async () => {
-  if (!provider) {
+  if (!provider || !provider.chainId) {
     try {
       provider = createExternalExtensionProvider("flask");
     } catch (err) {
@@ -211,6 +211,7 @@ const sync = async () => {
  * @returns
  */
 const setNeverSave = async (url: string, neverSave: string) => {
+  await checkProviderStatus();
   if (provider) {
     return await provider.request({
       method: "wallet_invokeSnap",
@@ -261,8 +262,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
     );
 
     return true;
-  }
-  if (message.type === "FORM_SUBMIT") {
+  } else if (message.type === "FORM_SUBMIT") {
     chrome.storage.local.get("pending").then((obj) => {
       if (!obj) {
         obj = {};
@@ -483,6 +483,7 @@ chrome.windows.onFocusChanged.addListener(async function (windowId: number) {
     });
     updateExtensionIcon((tab && tab.url) ?? "");
     if (tab) {
+      activeTabId = tab && tab.id ? tab.id : activeTabId;
       updatePending();
     }
   }

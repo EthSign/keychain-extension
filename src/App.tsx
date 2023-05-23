@@ -62,7 +62,7 @@ function App() {
   const loadCurrentUrl = () => {
     chrome.tabs &&
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-        let url = tabs[0].url ?? "";
+        let url = tabs ? tabs[0]?.url ?? "" : "";
         const idx = url.toString().indexOf("?");
         url = url.toString().slice(0, idx >= 0 ? idx : url.toString().length);
 

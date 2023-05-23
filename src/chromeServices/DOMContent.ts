@@ -131,6 +131,9 @@ document.addEventListener(
       if (url.at(url.length - 1) === "/") {
         url = url.substring(0, url.length - 1);
       }
+      if (url.startsWith("chrome")) {
+        return;
+      }
       const credentials: Credential | undefined = await new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: "GET_PASSWORD", data: { url: url } }, (response) => {
           resolve(response?.data ?? undefined);
