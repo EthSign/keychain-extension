@@ -14,7 +14,7 @@ function CredentialRow(props: CredentialRowProps) {
 
   return (
     <div className="flex flex-row justify-between">
-      <div className="">{credential.username}</div>
+      <div className="my-auto">{credential.username}</div>
       <div className="flex flex-row flex-nowrap">
         <CopyToClipboard text={credential.password ?? ""}>
           <div className="my-auto">

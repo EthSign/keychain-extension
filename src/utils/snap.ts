@@ -1,4 +1,4 @@
-import { DOMMessage } from "../types";
+import { Credential, DOMMessage } from "../types";
 
 /**
  * Call to content script for connecting to our snap.
@@ -104,6 +104,43 @@ export const sendSync = async () => {
               } as DOMMessage,
               (response: any) => {
                 resolve(response?.data ?? false);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+export const requestCredentials = async (url: string) => {
+  return new Promise<Credential | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "REQUEST_CREDENTIALS",
+                data: { url: url }
+              } as DOMMessage,
+              (response: {
+                data: {
+                  timestamp: number;
+                  neverSave?: boolean | undefined;
+                  logins: {
+                    address?: string;
+                    timestamp: number;
+                    url: string;
+                    username: string;
+                    password: string;
+                  }[];
+                };
+              }) => {
+                resolve(response?.data ?? undefined);
               }
             );
           }

@@ -1,5 +1,7 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 
+let pending: any;
+
 /**
  * Function called when a new message is received
  * @param msg Message we receive.
@@ -12,7 +14,8 @@ const receiveMessage = (
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: DOMMessageResponse) => void
 ) => {
-  console.log("[content.js]. Message received", msg);
+  // @ts-ignore
+  console.log("[content.js]. Message received", msg?.type === "UPDATE_PENDING" ? msg.type : msg);
 
   // Make sure only our extension can send messages
   if (sender.id !== chrome.runtime.id) {
@@ -22,13 +25,27 @@ const receiveMessage = (
 
   switch (msg.type) {
     case "PERSIST":
+      let username: string | undefined = undefined,
+        password: string | undefined = undefined;
+      if (msg.data.user) {
+        username = msg.data.user.username;
+        password = msg.data.user.password;
+      } else if (pending) {
+        username = pending.username;
+        password = pending.password;
+      }
+
+      if (!username && !password) {
+        return;
+      }
+
       chrome.runtime.sendMessage(
         {
           type: "SET_PASSWORD",
           data: {
             url: msg.data.url,
-            username: msg.data.user.username,
-            password: msg.data.user.password
+            username: username,
+            password: password
           }
         },
         (res) => {
@@ -74,6 +91,22 @@ const receiveMessage = (
     case "SYNC":
       chrome.runtime.sendMessage({ type: msg.type }, (res) => sendResponse(res));
       return true;
+    // @ts-ignore
+    case "UPDATE_PENDING":
+      pending = msg.data;
+      console.log("[update_pending]", pending);
+      const banner = document.getElementById("ethsign-keychain-banner");
+      if (!pending) {
+        banner && (banner.style.display = "none");
+      } else {
+        if (banner) {
+          banner.style.display = "block";
+          const message = banner.shadowRoot?.getElementById("ethsign-keychain-banner-message");
+          message &&
+            (message.textContent = `Would you like to save your credentials for '${pending.username}' on this site?`);
+        }
+      }
+      break;
   }
 };
 
@@ -98,10 +131,9 @@ document.addEventListener(
       if (url.at(url.length - 1) === "/") {
         url = url.substring(0, url.length - 1);
       }
-      // TODO: This won't work for prod. Need to restructure the data.
       const credentials: Credential | undefined = await new Promise((resolve) => {
-        chrome.runtime.sendMessage({ type: "REQUEST_CREDENTIALS", data: { url: url } }, (response) => {
-          resolve(response);
+        chrome.runtime.sendMessage({ type: "GET_PASSWORD", data: { url: url } }, (response) => {
+          resolve(response?.data ?? undefined);
         });
       });
       // Get list of forms
@@ -120,7 +152,7 @@ document.addEventListener(
             credentials &&
             credentials.logins &&
             credentials.logins.length > 0 &&
-            inputs[j].getAttribute("name") === "username"
+            (inputs[j].getAttribute("name") === "username" || inputs[j].getAttribute("name") === "email")
           ) {
             inputs[j].value = credentials.logins[0].username;
           } else if (
@@ -135,7 +167,9 @@ document.addEventListener(
           // Create form submit listener
           if (
             !listenerCreated &&
-            (inputs[j].getAttribute("name") === "username" || inputs[j].getAttribute("name") === "password")
+            (inputs[j].getAttribute("name") === "username" ||
+              inputs[j].getAttribute("name") === "email" ||
+              inputs[j].getAttribute("name") === "password")
           ) {
             listenerCreated = true;
             form.submitOrig = form.onsubmit;
@@ -150,7 +184,10 @@ document.addEventListener(
                 let username = "",
                   password = "";
                 for (let j = 0; j < tmpInputs.length; j++) {
-                  if (tmpInputs[j].getAttribute("name") === "username") {
+                  // We will prefer to save the "username" input value over a "email" input value
+                  if (tmpInputs[j].getAttribute("name") === "email" && username === "") {
+                    username = tmpInputs[j].value;
+                  } else if (tmpInputs[j].getAttribute("name") === "username") {
                     username = tmpInputs[j].value;
                   } else if (tmpInputs[j].getAttribute("name") === "password" || tmpInputs[j].type === "password") {
                     password = tmpInputs[j].value;

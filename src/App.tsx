@@ -4,10 +4,10 @@ import DisplayCredentials from "./components/DisplayCredentials";
 import NeverSave from "./components/NeverSave";
 import Pending from "./components/Pending";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
-import { Credential, DOMMessage } from "./types";
+import { Credential } from "./types";
 import Button from "./ui/forms/Button";
-import { connectSnap, getSnap } from "./utils/snap";
-import { createExternalExtensionProvider } from "@metamask/providers";
+import { connectSnap, getSnap, requestCredentials, sendSync } from "./utils/snap";
+import { DEFAULT_SNAP_ID } from "./chromeServices/DOMBackground";
 
 function App() {
   const [pending, handlePending] =
@@ -15,6 +15,7 @@ function App() {
   const [url, handleUrl] = useState<string>();
   const [credentials, handleCredentials] = useState<Credential | null>();
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [loading, handleLoading] = useState(false);
 
   useEffect(() => {
     loadPending();
@@ -28,15 +29,14 @@ function App() {
     }
 
     (async () => {
+      handleLoading(true);
       const creds = await requestCredentials(url);
-      console.log(creds);
       handleCredentials(creds);
+      handleLoading(false);
     })();
   }, [state.installedSnap, state.isFlask, url]);
 
   const connectToMetaMask = async () => {
-    // const provider = createExternalExtensionProvider();
-    // console.log("provider: " + provider);
     try {
       await connectSnap();
       const installedSnap = await getSnap();
@@ -74,41 +74,20 @@ function App() {
       });
   };
 
-  const requestCredentials = async (url: string) => {
-    return new Promise<Credential | undefined>((resolve) => {
-      chrome.tabs
-        ? chrome.tabs.query(
-            {
-              active: true,
-              currentWindow: true
-            },
-            (tabs) => {
-              chrome.tabs.sendMessage(
-                tabs[0].id || 0,
-                {
-                  type: "REQUEST_CREDENTIALS",
-                  data: { url: url }
-                } as DOMMessage,
-                (response: {
-                  data: {
-                    timestamp: number;
-                    neverSave?: boolean | undefined;
-                    logins: {
-                      address?: string;
-                      timestamp: number;
-                      url: string;
-                      username: string;
-                      password: string;
-                    }[];
-                  };
-                }) => {
-                  resolve(response?.data ?? undefined);
-                }
-              );
-            }
-          )
-        : resolve(undefined);
-    });
+  /**
+   * Syncs the Snap's local state with the remote state and then retrieves the credentials for the current site. Updates loading state as necessary.
+   *
+   * @returns Boolean value representing a successful sync.
+   */
+  const handleSync = async () => {
+    handleLoading(true);
+    const res = await sendSync();
+    if (url) {
+      const creds = await requestCredentials(url);
+      handleCredentials(creds);
+    }
+    handleLoading(false);
+    return res;
   };
 
   if (pending && url && pending[url]) {
@@ -135,15 +114,21 @@ function App() {
 
   return (
     <div className="">
-      <h1>{url}</h1>
-      {Object.keys(state.installedSnap ?? {}).length === 0 && (
-        <Button onClick={connectToMetaMask} disabled={!state.isFlask}>
+      <h1 className="border-b border-black w-full">{url}</h1>
+      {(Object.keys(state.installedSnap ?? {}).length === 0 || DEFAULT_SNAP_ID.startsWith("local")) && (
+        <Button onClick={connectToMetaMask} disabled={!state.isFlask} className="mt-2">
           Connect Snap
         </Button>
       )}
 
       <div className="">
-        <DisplayCredentials url={url} credentials={credentials} handleCredentials={handleCredentials} />
+        <DisplayCredentials
+          url={url}
+          credentials={credentials}
+          handleCredentials={handleCredentials}
+          handleSync={handleSync}
+          loading={loading}
+        />
       </div>
     </div>
   );

@@ -1,13 +1,49 @@
 // Bogus import to prevent "module error"
 import _ from "lodash";
-import { createExternalExtensionProvider } from "@metamask/providers";
+import { StreamProvider, createExternalExtensionProvider } from "@metamask/providers";
 
-const DEFAULT_SNAP_ID = "npm:w3ptestsnap"; // "local:http://localhost:8081";
-const SNAP_VERSION = "0.2.3";
-let activeTabId: number;
+// export const DEFAULT_SNAP_ID = "local:http://localhost:8081";
+export const DEFAULT_SNAP_ID = "npm:w3ptestsnap"; // "local:http://localhost:8081";
+const SNAP_VERSION = "0.2.4";
+let activeTabId: number, activeWindowId: number;
 
 /// Begin snap functions
-const provider = createExternalExtensionProvider();
+let provider: StreamProvider | undefined = undefined;
+try {
+  provider = createExternalExtensionProvider("flask");
+} catch (err) {
+  console.log("Error creating provider", err);
+}
+
+/**
+ * Request user to log into their MetaMask if they are not connected to this extension
+ */
+const checkProviderStatus = async () => {
+  if (!provider) {
+    try {
+      provider = createExternalExtensionProvider("flask");
+    } catch (err) {
+      console.log("Error creating provider", err);
+    }
+  }
+  if (provider && !provider.isConnected()) {
+    console.log(provider);
+    // FREDERIK: The following lines have been added as an attempt to force a popup window so the user
+    // will unlock MetaMask. I tried two different ways (one uncommented, one commented). Neither seems
+    // to do the trick on browser restart without reinstalling my extension.
+    await provider.request({ method: "eth_requestAccounts" }).catch((err) => console.log(err));
+    // await provider
+    //   .request({
+    //     method: "wallet_requestPermissions",
+    //     params: [
+    //       {
+    //         eth_accounts: {}
+    //       }
+    //     ]
+    //   })
+    //   .catch((err) => console.log(err));
+  }
+};
 
 /**
  * Connect a snap to MetaMask.
@@ -19,12 +55,15 @@ export const connectSnap = async (
   snapId: string = DEFAULT_SNAP_ID,
   params: Record<"version" | string, unknown> = {}
 ) => {
-  await provider.request({
-    method: "wallet_requestSnaps",
-    params: {
-      [snapId]: params
-    }
-  });
+  await checkProviderStatus();
+  if (provider) {
+    await provider.request({
+      method: "wallet_requestSnaps",
+      params: {
+        [snapId]: params
+      }
+    });
+  }
 };
 
 /**
@@ -33,9 +72,12 @@ export const connectSnap = async (
  * @returns The snaps installed in MetaMask.
  */
 const getSnaps = async () => {
-  return await provider.request({
-    method: "wallet_getSnaps"
-  });
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_getSnaps"
+    });
+  }
 };
 
 /**
@@ -63,6 +105,7 @@ const getSnap = async (version: string) => {
  * @returns True if the MetaMask version is Flask, false otherwise.
  */
 const isFlask = async () => {
+  await checkProviderStatus();
   try {
     const clientVersion = await provider?.request({
       method: "web3_clientVersion"
@@ -83,13 +126,18 @@ const isFlask = async () => {
  * @returns
  */
 const getPassword = async (url: string) => {
-  return await provider.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: DEFAULT_SNAP_ID,
-      request: { method: "get_password", params: { website: url } }
-    }
-  });
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: DEFAULT_SNAP_ID,
+        request: { method: "get_password", params: { website: url } }
+      }
+    });
+  } else {
+    return undefined;
+  }
 };
 
 /**
@@ -100,16 +148,19 @@ const getPassword = async (url: string) => {
  * @returns
  */
 const setPassword = async (url: string, username: string, password: string) => {
-  return await provider.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: DEFAULT_SNAP_ID,
-      request: {
-        method: "set_password",
-        params: { website: url, username: username, password: password }
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: DEFAULT_SNAP_ID,
+        request: {
+          method: "set_password",
+          params: { website: url, username: username, password: password }
+        }
       }
-    }
-  });
+    });
+  }
 };
 
 /**
@@ -119,16 +170,19 @@ const setPassword = async (url: string, username: string, password: string) => {
  * @returns
  */
 const removePassword = async (url: string, username: string) => {
-  return await provider.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: DEFAULT_SNAP_ID,
-      request: {
-        method: "remove_password",
-        params: { website: url, username: username }
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: DEFAULT_SNAP_ID,
+        request: {
+          method: "remove_password",
+          params: { website: url, username: username }
+        }
       }
-    }
-  });
+    });
+  }
 };
 
 /**
@@ -136,15 +190,18 @@ const removePassword = async (url: string, username: string) => {
  * @returns
  */
 const sync = async () => {
-  return await provider.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: DEFAULT_SNAP_ID,
-      request: {
-        method: "sync"
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: DEFAULT_SNAP_ID,
+        request: {
+          method: "sync"
+        }
       }
-    }
-  });
+    });
+  }
 };
 
 /**
@@ -154,16 +211,18 @@ const sync = async () => {
  * @returns
  */
 const setNeverSave = async (url: string, neverSave: string) => {
-  return await window.ethereum.request({
-    method: "wallet_invokeSnap",
-    params: {
-      snapId: DEFAULT_SNAP_ID,
-      request: {
-        method: "set_neversave",
-        params: { website: url, neverSave: neverSave }
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: DEFAULT_SNAP_ID,
+        request: {
+          method: "set_neversave",
+          params: { website: url, neverSave: neverSave }
+        }
       }
-    }
-  });
+    });
+  }
 };
 
 /**
@@ -178,6 +237,31 @@ function listener(message: any, sender: any, sendResponse: Function) {
     return;
   }
 
+  if (message.type === "PERSIST") {
+    // This gets called from notifications.js when the user clicks "Save" on the banner
+    chrome.tabs.sendMessage(
+      activeTabId,
+      {
+        type: "PERSIST",
+        data: message.data
+      },
+      (res) => sendResponse(res)
+    );
+
+    return true;
+  } else if (message.type === "NEVER_SAVE") {
+    // This gets called from notifications.js when the user clicks "Never Save" on the banner
+    chrome.tabs.sendMessage(
+      activeTabId,
+      {
+        type: "SET_NEVER_SAVE",
+        data: { ...message.data, neverSave: true }
+      },
+      (res) => sendResponse(res)
+    );
+
+    return true;
+  }
   if (message.type === "FORM_SUBMIT") {
     chrome.storage.local.get("pending").then((obj) => {
       if (!obj) {
@@ -195,11 +279,15 @@ function listener(message: any, sender: any, sendResponse: Function) {
           : -1;
       if (idx < 0) {
         chrome.action.setIcon({ path: "/images.png" });
-        chrome.storage.local.set({
-          pending: Object.assign({}, obj, {
-            [message.url]: { username: message.username, password: message.password, update: idxU >= 0 }
+        chrome.storage.local
+          .set({
+            pending: Object.assign({}, obj, {
+              [message.url]: { username: message.username, password: message.password, update: idxU >= 0 }
+            })
           })
-        });
+          .then(() => {
+            updatePending();
+          });
       }
     });
   } else if (message.type === "CLEAR_PENDING_FOR_SITE") {
@@ -213,6 +301,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
         obj[message.data.url] = undefined;
         chrome.storage.local.set({ pending: obj }).then(() => {
           updateExtensionIcon(message.data.url);
+          updatePending(obj);
         });
       }
       if (message.data.return) {
@@ -279,6 +368,11 @@ function listener(message: any, sender: any, sendResponse: Function) {
       sendResponse({ data: res });
     });
     return true;
+  } else if (message.type === "GET_ACTIVE_URL") {
+    getTabBaseUrl(activeTabId)
+      .then((tabUrl) => getBaseUrl(tabUrl))
+      .then((res) => sendResponse({ data: res }));
+    return true;
   } else {
     sendResponse(message.type + " method not supported.");
   }
@@ -288,6 +382,42 @@ if (!chrome.runtime.onMessage.hasListeners()) {
   chrome.runtime.onMessage.addListener(listener);
 }
 
+async function updatePending(pending?: any) {
+  if (chrome.runtime.lastError) {
+    console.log(chrome.runtime.lastError);
+  }
+  if (!activeTabId) {
+    return;
+  }
+
+  if (!pending) {
+    pending = await chrome.storage.local.get("pending").then((obj) => {
+      if (!obj) {
+        obj = {};
+      } else {
+        obj = obj.pending;
+      }
+
+      return obj;
+    });
+  }
+
+  chrome.tabs.sendMessage(activeTabId, {
+    type: "UPDATE_PENDING",
+    data: pending ? pending[getBaseUrl(await getTabBaseUrl(activeTabId))] : undefined
+  });
+}
+
+function getBaseUrl(url: string) {
+  let baseUrl = url.toString().slice(0, url.toString().indexOf("?") ?? url.toString().length);
+  // Remove trailing slash in url
+  if (baseUrl.at(url.length - 1) === "/") {
+    baseUrl = baseUrl.substring(0, baseUrl.length - 1);
+  }
+
+  return baseUrl;
+}
+
 /**
  * Get tab URL
  * @param tabId Tab ID to get the URL for
@@ -295,9 +425,13 @@ if (!chrome.runtime.onMessage.hasListeners()) {
  */
 async function getTabBaseUrl(tabId: number) {
   return new Promise<string>((resolve, reject) => {
-    chrome.tabs.get(tabId, function (tab) {
-      resolve(tab.url ?? "");
-    });
+    try {
+      chrome.tabs.get(tabId, function (tab) {
+        resolve(tab.url ?? "");
+      });
+    } catch (err) {
+      resolve("");
+    }
   });
 }
 
@@ -307,11 +441,7 @@ async function getTabBaseUrl(tabId: number) {
  */
 async function updateExtensionIcon(tabUrl: string) {
   const obj = (await chrome.storage.local.get("pending")) ?? {};
-  let url = tabUrl.toString().slice(0, tabUrl.toString().indexOf("?") ?? tabUrl.toString().length);
-  // Remove trailing slash in url
-  if (url.at(url.length - 1) === "/") {
-    url = url.substring(0, url.length - 1);
-  }
+  let url = getBaseUrl(tabUrl);
   if (obj.pending && obj.pending[url]) {
     chrome.action.setTitle({ title: "Open Web3Pass" });
     chrome.action.setIcon({ path: "/images.png" });
@@ -328,14 +458,16 @@ async function updateExtensionIcon(tabUrl: string) {
  */
 chrome.tabs.onActivated.addListener(async function (activeInfo) {
   updateExtensionIcon(await getTabBaseUrl((activeTabId = activeInfo.tabId)));
+  // updatePending();
 });
 
 /**
  * Listen for when a tab updates
  */
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (activeTabId === tabId) {
+  if (activeTabId === tabId && changeInfo.status === "complete") {
     updateExtensionIcon(await getTabBaseUrl((activeTabId = tabId)));
+    updatePending();
   }
 });
 
@@ -343,8 +475,15 @@ chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
  * Listen for window changes (to get the current focused tab)
  */
 chrome.windows.onFocusChanged.addListener(async function (windowId: number) {
-  if (windowId !== chrome.windows.WINDOW_ID_NONE) {
-    const [tab] = await chrome.tabs.query({ active: true, windowId: windowId });
+  if (windowId !== chrome.windows.WINDOW_ID_NONE && windowId !== activeWindowId) {
+    activeWindowId = windowId;
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      windowId: windowId
+    });
     updateExtensionIcon((tab && tab.url) ?? "");
+    if (tab) {
+      updatePending();
+    }
   }
 });

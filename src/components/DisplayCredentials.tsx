@@ -1,18 +1,18 @@
 import { Credential, DOMMessage } from "../types";
-import { CopyToClipboard } from "react-copy-to-clipboard";
 import Button from "../ui/forms/Button";
 import _ from "lodash";
 import CredentialRow from "./CredentialRow";
-import { sendSync } from "../utils/snap";
 
 interface DisplayCredentialsProps {
   url?: string;
   credentials?: Credential | null;
   handleCredentials: (creds: Credential) => void;
+  handleSync: () => Promise<boolean | undefined>;
+  loading?: boolean;
 }
 
 function DisplayCredentials(props: DisplayCredentialsProps) {
-  const { url, credentials, handleCredentials } = props;
+  const { url, credentials, handleCredentials, handleSync, loading = false } = props;
 
   const removeCredential = async (username: string) => {
     chrome.tabs &&
@@ -45,9 +45,21 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
       );
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center w-full py-4">
+        <svg className="animate-spin w-8 h-8 fill-blue-300 shrink-0" viewBox="0 0 16 16">
+          <path d="M8 16a7.928 7.928 0 01-3.428-.77l.857-1.807A6.006 6.006 0 0014 8c0-3.309-2.691-6-6-6a6.006 6.006 0 00-5.422 8.572l-1.806.859A7.929 7.929 0 010 8c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" />
+        </svg>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
-      <Button onClick={sendSync}>Sync</Button>
+      <Button onClick={handleSync} className="mr-auto mt-2">
+        Sync
+      </Button>
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
         <div>
           {credentials.logins.map((cred, idx) => (

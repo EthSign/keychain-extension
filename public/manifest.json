@@ -8,7 +8,6 @@
     "default_popup": "index.html",
     "default_title": "Open Web3Pass"
   },
-  "browser_action": { "popup": "index.html" },
   "web_accessible_resources": [
     {
       "matches": ["http://*/*", "https://*/*"],
@@ -20,11 +19,13 @@
     "48": "logo192.png",
     "128": "logo192.png"
   },
-  "short_name": "React App",
-  "content_scripts": [{
-    "matches": ["http://*/*", "https://*/*"],
-    "js": ["./static/js/content.js"]
-  }],
+  "short_name": "Web3Pass",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["./static/js/content.js", "notifications.js"]
+    }
+  ],
   "background": {
     "service_worker": "./static/js/background.js"
   }
