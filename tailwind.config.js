@@ -20,9 +20,10 @@ module.exports = {
         500: "#EF6820"
       },
       primary: {
-        600: "#DD8D58"
+        600: "#DD8D58",
+        900: "#CF5C10"
       },
-      black: colors.black,
+      black: { ...colors.black, 900: "#1E1E1E" },
       slate: colors.slate
     },
     extend: {

@@ -7,6 +7,7 @@ import { connectSnap, getSnap, requestCredentials, sendAutofill, sendSync } from
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
 import Pending from "./pages/Pending";
+import { Spinner } from "./components/icons/Spinner";
 
 function App() {
   const [pending, handlePending] =
@@ -15,6 +16,7 @@ function App() {
   const [credentials, handleCredentials] = useState<Credential | null>();
   const [state, dispatch] = useContext(MetaMaskContext);
   const [loading, handleLoading] = useState(false);
+  const [loadingMessage, handleLoadingMessage] = useState("Loading...");
 
   useEffect(() => {
     loadPending();
@@ -28,6 +30,7 @@ function App() {
     }
 
     (async () => {
+      handleLoadingMessage("Retrieving Credentials...");
       handleLoading(true);
       const creds = await requestCredentials(url);
       handleCredentials(creds);
@@ -79,6 +82,7 @@ function App() {
    * @returns Boolean value representing a successful sync.
    */
   const handleSync = async () => {
+    handleLoadingMessage("Syncing...");
     handleLoading(true);
     const res = await sendSync();
     if (url) {
@@ -90,7 +94,7 @@ function App() {
   };
 
   return (
-    <div className="font-plex">
+    <div className="font-plex dark:bg-black-900 dark:text-white">
       <div className="p-8">
         {Object.keys(state.installedSnap ?? {}).length === 0 ? (
           <>
@@ -116,7 +120,6 @@ function App() {
               credentials={credentials}
               handleCredentials={handleCredentials}
               handleSync={handleSync}
-              loading={loading}
               selectCallback={(credential: {
                 address?: string | undefined;
                 timestamp: number;
@@ -130,6 +133,18 @@ function App() {
           </>
         )}
       </div>
+      {loading ? (
+        <>
+          <div className="absolute inset-0 bg-[#757575]/80 dark:bg-[#000000]/80">
+            <div className="flex flex-col h-full w-full justify-center items-center">
+              <div className="flex justify-center w-full py-4">
+                <Spinner className="animate-spin" />
+              </div>
+              <div className="font-semibold text-white text-2xl text-center mt-2">{loadingMessage}</div>
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

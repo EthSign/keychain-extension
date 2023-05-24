@@ -2,12 +2,12 @@ import { Credential, DOMMessage } from "../types";
 import _ from "lodash";
 import { Locked } from "./icons/Locked";
 import EntryContent from "./EntryContent";
+import { LockedDark } from "./icons/LockedDark";
 
 interface DisplayCredentialsProps {
   url?: string;
   credentials?: Credential | null;
   handleCredentials: (creds: Credential) => void;
-  loading?: boolean;
   selectCallback?: (credential: {
     address?: string | undefined;
     timestamp: number;
@@ -18,7 +18,7 @@ interface DisplayCredentialsProps {
 }
 
 function DisplayCredentials(props: DisplayCredentialsProps) {
-  const { url, credentials, handleCredentials, loading = false, selectCallback } = props;
+  const { url, credentials, handleCredentials, selectCallback } = props;
 
   const removeCredential = async (username: string) => {
     chrome.tabs &&
@@ -51,23 +51,13 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
       );
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center w-full py-4">
-        <svg className="animate-spin w-8 h-8 fill-blue-300 shrink-0" viewBox="0 0 16 16">
-          <path d="M8 16a7.928 7.928 0 01-3.428-.77l.857-1.807A6.006 6.006 0 0014 8c0-3.309-2.691-6-6-6a6.006 6.006 0 00-5.422 8.572l-1.806.859A7.929 7.929 0 010 8c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z" />
-        </svg>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center w-full">
       {/* <Button onClick={handleSync} className="mr-auto mt-2">
         Sync
       </Button> */}
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
-        <div className="w-full divide-y divide-solid">
+        <div className="w-full divide-y divide-solid dark:divide-white/20">
           {credentials.logins.map((cred, idx) => (
             <EntryContent
               key={`cred-${idx}`}
@@ -79,10 +69,13 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
         </div>
       ) : (
         <>
-          <div className="mb-4">
+          <div className="mb-4 dark:hidden">
             <Locked className="h-12 w-12" />
           </div>
-          <div className="text-base text-gray-400 text-center">No passwords saved yet.</div>
+          <div className="mb-4 hidden dark:block">
+            <LockedDark className="h-12 w-12" />
+          </div>
+          <div className="text-base text-gray-400 dark:text-gray-300 text-center">No passwords saved yet.</div>
         </>
       )}
     </div>

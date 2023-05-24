@@ -51,7 +51,7 @@ function Button(props: ButtonProps) {
 
   const bgAndBorderColor = () => {
     if (!filled) {
-      return "border-white hover:border-white";
+      return "border-transparent hover:border-transparent";
     }
 
     if (disabled) {
@@ -59,9 +59,9 @@ function Button(props: ButtonProps) {
     }
     switch (style) {
       case "primary":
-        return "bg-orange-500 border-primary-600";
+        return "bg-orange-500 border-primary-600 dark:border-primary-900";
       case "secondary":
-        return "bg-white border-gray-200";
+        return "bg-white border-gray-200 dark:bg-transparent dark:border-white/20";
       case "tertiary":
         return "bg-black/0 border-transparent hover:bg-black/5 active:bg-black/10";
       case "danger":
@@ -82,7 +82,7 @@ function Button(props: ButtonProps) {
         if (grouped && !groupedSelected) {
           return "text-slate-600";
         }
-        return "text-gray-500";
+        return "text-gray-500 dark:text-gray-300";
       case "tertiary":
         if (grouped && groupedSelected) {
           return "text-black";

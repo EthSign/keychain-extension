@@ -118,7 +118,9 @@ function Pending(props: PendingProps) {
     <>
       <TopBar />
       <div className="my-8 flex flex-col items-center">
-        <div className="rounded-full border border-gray-200 text-base text-gray-900 py-2 px-6 text-center">{url}</div>
+        <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
+          {url}
+        </div>
         <div className="text-2xl font-semibold mt-4 text-center">
           Would you like to save your password for this site?
         </div>

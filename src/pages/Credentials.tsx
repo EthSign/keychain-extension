@@ -8,7 +8,6 @@ interface CredentialsProps {
   credentials?: Credential | null;
   handleCredentials: (cred: Credential | null) => void;
   handleSync: () => Promise<boolean | undefined>;
-  loading: boolean;
   selectCallback?: (credential: {
     address?: string | undefined;
     timestamp: number;
@@ -19,25 +18,30 @@ interface CredentialsProps {
 }
 
 function Credentials(props: CredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, loading, selectCallback } = props;
+  const { url, credentials, handleCredentials, handleSync, selectCallback } = props;
 
   return (
     <>
       <TopBar />
       <div className="my-8 flex flex-col items-center">
-        <div className="rounded-full border border-gray-200 text-base text-gray-900 py-2 px-6 text-center">{url}</div>
+        <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
+          {url}
+        </div>
         <div className="text-2xl font-semibold mt-4">EthSign Keychain</div>
         <div className="mt-4 text-base">Select a password to autofill</div>
       </div>
 
       <div
-        className={`mb-8 rounded-lg${!credentials || credentials.logins.length === 0 ? "" : " border border-gray-200"}`}
+        className={`mb-8 rounded-lg${
+          !credentials || credentials.logins.length === 0
+            ? ""
+            : " border border-gray-200 dark:border-white/20 dark:bg-[#222123]"
+        }`}
       >
         <DisplayCredentials
           url={url}
           credentials={credentials}
           handleCredentials={handleCredentials}
-          loading={loading}
           selectCallback={selectCallback}
         />
       </div>
