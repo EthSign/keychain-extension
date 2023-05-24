@@ -232,10 +232,10 @@ function listener(message: any, sender: any, sendResponse: Function) {
   }
 
   // Only interact with messages initiated from the chrome extension origin
-  if (!sender.origin.startsWith("chrome-extension")) {
-    console.log("Ignoring message.");
-    return;
-  }
+  // if (!sender.origin.startsWith("chrome-extension")) {
+  //   console.log("Ignoring message.");
+  //   return;
+  // }
 
   if (message.type === "PERSIST") {
     // This gets called from notifications.js when the user clicks "Save" on the banner

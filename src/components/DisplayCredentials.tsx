@@ -2,6 +2,7 @@ import { Credential, DOMMessage } from "../types";
 import Button from "../ui/forms/Button";
 import _ from "lodash";
 import CredentialRow from "./CredentialRow";
+import { Locked } from "./icons/Locked";
 
 interface DisplayCredentialsProps {
   url?: string;
@@ -56,10 +57,10 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
   }
 
   return (
-    <div className="flex flex-col">
-      <Button onClick={handleSync} className="mr-auto mt-2">
+    <div className="flex flex-col items-center">
+      {/* <Button onClick={handleSync} className="mr-auto mt-2">
         Sync
-      </Button>
+      </Button> */}
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
         <div>
           {credentials.logins.map((cred, idx) => (
@@ -67,7 +68,12 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
           ))}
         </div>
       ) : (
-        <div>No logins saved for this site.</div>
+        <>
+          <div className="mb-4">
+            <Locked className="h-12 w-12" />
+          </div>
+          <div className="text-base text-gray-400 text-center">No passwords saved yet.</div>
+        </>
       )}
     </div>
   );

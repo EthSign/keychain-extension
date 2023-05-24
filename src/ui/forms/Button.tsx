@@ -61,7 +61,7 @@ function Button(props: ButtonProps) {
       case "primary":
         return "bg-orange-500 border-primary-600";
       case "secondary":
-        return "bg-white hover:bg-gray-21 active:bg-gray-23";
+        return "bg-white border-gray-200";
       case "tertiary":
         return "bg-black/0 border-transparent hover:bg-black/5 active:bg-black/10";
       case "danger":
@@ -82,7 +82,7 @@ function Button(props: ButtonProps) {
         if (grouped && !groupedSelected) {
           return "text-slate-600";
         }
-        return "text-black";
+        return "text-gray-500";
       case "tertiary":
         if (grouped && groupedSelected) {
           return "text-black";

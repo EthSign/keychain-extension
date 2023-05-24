@@ -2,7 +2,6 @@ import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import DisplayCredentials from "./components/DisplayCredentials";
 import NeverSave from "./components/NeverSave";
-import Pending from "./components/Pending";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential } from "./types";
 import Button from "./ui/forms/Button";
@@ -11,6 +10,9 @@ import TopBar from "./components/TopBar";
 import { KeychainLogo } from "./components/icons/KeychainLogo";
 import { Chain } from "./components/icons/Chain";
 import { SNAP_ID } from "./config";
+import Connect from "./pages/Connect";
+import Credentials from "./pages/Credentials";
+import Pending from "./pages/Pending";
 
 function App() {
   const [pending, handlePending] =
@@ -95,23 +97,9 @@ function App() {
 
   if (Object.keys(state.installedSnap ?? {}).length === 0) {
     return (
-      <div className="p-8">
-        <TopBar />
-        <div className="flex flex-col mt-8 items-center">
-          <div className="text-2xl font-semibold">EthSign Keychain</div>
-          <div className="mt-4 text-base">Little do you know, I send everything to the CIA</div>
-          <div className="my-8">
-            <KeychainLogo className="h-24 w-24" />
-          </div>
-          <Button
-            className="px-8 py-3 mb-8"
-            onClick={connectToMetaMask}
-            disabled={!state.isFlask}
-            customSizing={true}
-            icon={<Chain />}
-          >
-            Connect MetaMask
-          </Button>
+      <div className="font-plex">
+        <div className="p-8">
+          <Connect state={state} connectToMetaMask={connectToMetaMask} />
         </div>
       </div>
     );
@@ -119,10 +107,10 @@ function App() {
 
   if (pending && url && pending[url]) {
     return (
-      <div className="">
-        <h1>{url}</h1>
-
-        <Pending url={url} pending={pending} handlePending={handlePending} />
+      <div className="font-plex">
+        <div className="p-8">
+          <Pending url={url} pending={pending} handlePending={handlePending} />
+        </div>
       </div>
     );
   }
@@ -141,22 +129,8 @@ function App() {
 
   return (
     <div className="font-plex">
-      <h1 className="border-b border-black w-full">{url}</h1>
-      <Button
-        onClick={() => {
-          window.close();
-        }}
-      >
-        Close
-      </Button>
-      {(Object.keys(state.installedSnap ?? {}).length === 0 || SNAP_ID.startsWith("local")) && (
-        <Button onClick={connectToMetaMask} disabled={!state.isFlask} className="mt-2">
-          Connect Snap
-        </Button>
-      )}
-
-      <div className="">
-        <DisplayCredentials
+      <div className="p-8">
+        <Credentials
           url={url}
           credentials={credentials}
           handleCredentials={handleCredentials}
