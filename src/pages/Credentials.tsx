@@ -30,7 +30,9 @@ function Credentials(props: CredentialsProps) {
         <div className="mt-4 text-base">Select a password to autofill</div>
       </div>
 
-      <div className="mb-8 border border-gray-200 rounded-lg">
+      <div
+        className={`mb-8 rounded-lg${!credentials || credentials.logins.length === 0 ? "" : " border border-gray-200"}`}
+      >
         <DisplayCredentials
           url={url}
           credentials={credentials}

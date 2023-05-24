@@ -1,3 +1,5 @@
+import SyncPasswordsBar from "../components/SyncPasswordsBar";
+import TopBar from "../components/TopBar";
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 import Button from "../ui/forms/Button";
 
@@ -5,10 +7,11 @@ interface NeverSaveProps {
   url?: string;
   credentials: Credential;
   handleCredentials: React.Dispatch<React.SetStateAction<Credential | undefined | null>>;
+  handleSync: () => void;
 }
 
 function NeverSave(props: NeverSaveProps) {
-  const { url, credentials, handleCredentials } = props;
+  const { url, credentials, handleCredentials, handleSync } = props;
 
   const enablePasswordSaving = () => {
     if (!url) {
@@ -37,14 +40,24 @@ function NeverSave(props: NeverSaveProps) {
   };
 
   return (
-    <div className="flex flex-col">
-      <div>
-        You have chosen to never save passwords for this site. Would you like to enable password saving for this site?
+    <>
+      <TopBar />
+      <div className="my-8 flex flex-col items-center">
+        <div className="rounded-full border border-gray-200 text-base text-gray-900 py-2 px-6 text-center">{url}</div>
+        <div className="text-2xl font-semibold mt-4 text-center">
+          You disabled EthSign Keychain.
+          <br />
+          Click the button to enable it.
+        </div>
+        <div className="flex flex-row my-8">
+          <Button className="py-3 px-24" customSizing onClick={() => enablePasswordSaving()}>
+            Enable Keychain
+          </Button>
+        </div>
+
+        <SyncPasswordsBar syncPasswords={handleSync} />
       </div>
-      <div className="flex flex-row">
-        <Button onClick={() => enablePasswordSaving()}>Enable</Button>
-      </div>
-    </div>
+    </>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import DisplayCredentials from "./components/DisplayCredentials";
-import NeverSave from "./components/NeverSave";
+import NeverSave from "./pages/NeverSave";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential } from "./types";
 import Button from "./ui/forms/Button";
@@ -95,57 +95,46 @@ function App() {
     return res;
   };
 
-  if (Object.keys(state.installedSnap ?? {}).length === 0) {
-    return (
-      <div className="font-plex">
-        <div className="p-8">
-          <Connect state={state} connectToMetaMask={connectToMetaMask} />
-        </div>
-      </div>
-    );
-  }
-
-  if (pending && url && pending[url]) {
-    return (
-      <div className="font-plex">
-        <div className="p-8">
-          <Pending url={url} pending={pending} handlePending={handlePending} />
-        </div>
-      </div>
-    );
-  }
-
-  if (credentials?.neverSave) {
-    return (
-      <div className="">
-        <h1>{url}</h1>
-
-        <div className="">
-          <NeverSave url={url} credentials={credentials} handleCredentials={handleCredentials} />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="font-plex">
       <div className="p-8">
-        <Credentials
-          url={url}
-          credentials={credentials}
-          handleCredentials={handleCredentials}
-          handleSync={handleSync}
-          loading={loading}
-          selectCallback={(credential: {
-            address?: string | undefined;
-            timestamp: number;
-            url: string;
-            username: string;
-            password: string;
-          }) => {
-            sendAutofill(credential.username, credential.password).then(() => window.close());
-          }}
-        />
+        {Object.keys(state.installedSnap ?? {}).length === 0 ? (
+          <>
+            <Connect state={state} connectToMetaMask={connectToMetaMask} />
+          </>
+        ) : pending && url && pending[url] ? (
+          <>
+            <Pending url={url} pending={pending} handlePending={handlePending} />
+          </>
+        ) : credentials?.neverSave ? (
+          <>
+            <NeverSave
+              url={url}
+              credentials={credentials}
+              handleCredentials={handleCredentials}
+              handleSync={handleSync}
+            />
+          </>
+        ) : (
+          <>
+            <Credentials
+              url={url}
+              credentials={credentials}
+              handleCredentials={handleCredentials}
+              handleSync={handleSync}
+              loading={loading}
+              selectCallback={(credential: {
+                address?: string | undefined;
+                timestamp: number;
+                url: string;
+                username: string;
+                password: string;
+              }) => {
+                sendAutofill(credential.username, credential.password).then(() => window.close());
+              }}
+            />
+          </>
+        )}
       </div>
     </div>
   );
