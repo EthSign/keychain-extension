@@ -7,7 +7,10 @@ import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential } from "./types";
 import Button from "./ui/forms/Button";
 import { connectSnap, getSnap, requestCredentials, sendSync } from "./utils/snap";
-import { DEFAULT_SNAP_ID } from "./chromeServices/DOMBackground";
+import TopBar from "./components/TopBar";
+import { KeychainLogo } from "./components/icons/KeychainLogo";
+import { Chain } from "./components/icons/Chain";
+import { SNAP_ID } from "./config";
 
 function App() {
   const [pending, handlePending] =
@@ -90,6 +93,30 @@ function App() {
     return res;
   };
 
+  if (Object.keys(state.installedSnap ?? {}).length === 0) {
+    return (
+      <div className="p-8">
+        <TopBar />
+        <div className="flex flex-col mt-8 items-center">
+          <div className="text-2xl font-semibold">EthSign Keychain</div>
+          <div className="mt-4 text-base">Little do you know, I send everything to the CIA</div>
+          <div className="my-8">
+            <KeychainLogo className="h-24 w-24" />
+          </div>
+          <Button
+            className="px-8 py-3 mb-8"
+            onClick={connectToMetaMask}
+            disabled={!state.isFlask}
+            customSizing={true}
+            icon={<Chain />}
+          >
+            Connect MetaMask
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (pending && url && pending[url]) {
     return (
       <div className="">
@@ -113,9 +140,16 @@ function App() {
   }
 
   return (
-    <div className="">
+    <div className="font-plex">
       <h1 className="border-b border-black w-full">{url}</h1>
-      {(Object.keys(state.installedSnap ?? {}).length === 0 || DEFAULT_SNAP_ID.startsWith("local")) && (
+      <Button
+        onClick={() => {
+          window.close();
+        }}
+      >
+        Close
+      </Button>
+      {(Object.keys(state.installedSnap ?? {}).length === 0 || SNAP_ID.startsWith("local")) && (
         <Button onClick={connectToMetaMask} disabled={!state.isFlask} className="mt-2">
           Connect Snap
         </Button>

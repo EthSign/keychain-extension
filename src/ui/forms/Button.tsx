@@ -59,7 +59,7 @@ function Button(props: ButtonProps) {
     }
     switch (style) {
       case "primary":
-        return "bg-blue-300 hover:bg-opacity-90 active:bg-opacity-80 border-transparent";
+        return "bg-orange-500 border-primary-600";
       case "secondary":
         return "bg-white hover:bg-gray-21 active:bg-gray-23";
       case "tertiary":

@@ -1,10 +1,8 @@
 // Bogus import to prevent "module error"
 import _ from "lodash";
 import { StreamProvider, createExternalExtensionProvider } from "@metamask/providers";
+import { SNAP_ID, SNAP_VERSION } from "../config";
 
-// export const DEFAULT_SNAP_ID = "local:http://localhost:8081";
-export const DEFAULT_SNAP_ID = "npm:w3ptestsnap"; // "local:http://localhost:8081";
-const SNAP_VERSION = "0.2.4";
 let activeTabId: number, activeWindowId: number;
 
 /// Begin snap functions
@@ -51,13 +49,10 @@ const checkProviderStatus = async () => {
  * @param snapId - The ID of the snap.
  * @param params - The params to pass with the snap to connect.
  */
-export const connectSnap = async (
-  snapId: string = DEFAULT_SNAP_ID,
-  params: Record<"version" | string, unknown> = {}
-) => {
+export const connectSnap = async (snapId: string = SNAP_ID, params: Record<"version" | string, unknown> = {}) => {
   await checkProviderStatus();
   if (provider) {
-    await provider.request({
+    return await provider.request({
       method: "wallet_requestSnaps",
       params: {
         [snapId]: params
@@ -90,9 +85,7 @@ const getSnap = async (version: string) => {
   try {
     const snaps: any = await getSnaps();
 
-    return Object.values(snaps).find(
-      (snap: any) => snap.id === DEFAULT_SNAP_ID && (!version || snap.version === version)
-    );
+    return Object.values(snaps).find((snap: any) => snap.id === SNAP_ID && (!version || snap.version === version));
   } catch (e) {
     console.log("Failed to obtain installed snap", e);
     return undefined;
@@ -131,7 +124,7 @@ const getPassword = async (url: string) => {
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
-        snapId: DEFAULT_SNAP_ID,
+        snapId: SNAP_ID,
         request: { method: "get_password", params: { website: url } }
       }
     });
@@ -153,7 +146,7 @@ const setPassword = async (url: string, username: string, password: string) => {
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
-        snapId: DEFAULT_SNAP_ID,
+        snapId: SNAP_ID,
         request: {
           method: "set_password",
           params: { website: url, username: username, password: password }
@@ -175,7 +168,7 @@ const removePassword = async (url: string, username: string) => {
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
-        snapId: DEFAULT_SNAP_ID,
+        snapId: SNAP_ID,
         request: {
           method: "remove_password",
           params: { website: url, username: username }
@@ -195,7 +188,7 @@ const sync = async () => {
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
-        snapId: DEFAULT_SNAP_ID,
+        snapId: SNAP_ID,
         request: {
           method: "sync"
         }
@@ -216,7 +209,7 @@ const setNeverSave = async (url: string, neverSave: string) => {
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
-        snapId: DEFAULT_SNAP_ID,
+        snapId: SNAP_ID,
         request: {
           method: "set_neversave",
           params: { website: url, neverSave: neverSave }
@@ -235,6 +228,12 @@ function listener(message: any, sender: any, sendResponse: Function) {
   // Make sure only our extension can send messages
   if (sender.id !== chrome.runtime.id) {
     console.log(sender.id);
+    return;
+  }
+
+  // Only interact with messages initiated from the chrome extension origin
+  if (!sender.origin.startsWith("chrome-extension")) {
+    console.log("Ignoring message.");
     return;
   }
 
@@ -316,13 +315,17 @@ function listener(message: any, sender: any, sendResponse: Function) {
     updateExtensionIcon(message.data.url);
   } else if (message.type === "CONNECT_SNAP") {
     new Promise<string>((resolve) => {
-      connectSnap(`${DEFAULT_SNAP_ID}`, { version: SNAP_VERSION })
-        .then(() => {
-          resolve("Snap connect request completed");
-        })
-        .catch((err) => {
-          resolve("Failed to connect snap: " + err ? err.message : "Unknown error");
-        });
+      try {
+        connectSnap(`${SNAP_ID}`, { version: SNAP_VERSION })
+          .then(() => {
+            resolve("Snap connect request completed");
+          })
+          .catch((err) => {
+            resolve("Failed to connect snap: " + err ? err.message : "Unknown error");
+          });
+      } catch (err: any) {
+        resolve("Errored out: " + err ? err.message : "unknown");
+      }
     }).then((res) => sendResponse({ data: res }));
     return true;
   } else if (message.type === "GET_SNAP") {
@@ -466,8 +469,10 @@ chrome.tabs.onActivated.addListener(async function (activeInfo) {
  */
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (activeTabId === tabId && changeInfo.status === "complete") {
-    updateExtensionIcon(await getTabBaseUrl((activeTabId = tabId)));
-    updatePending();
+    if (!tab.url?.startsWith("chrome")) {
+      updateExtensionIcon(await getTabBaseUrl((activeTabId = tabId)));
+      updatePending();
+    }
   }
 });
 
@@ -482,7 +487,7 @@ chrome.windows.onFocusChanged.addListener(async function (windowId: number) {
       windowId: windowId
     });
     updateExtensionIcon((tab && tab.url) ?? "");
-    if (tab) {
+    if (tab && !tab.url?.startsWith("chrome")) {
       activeTabId = tab && tab.id ? tab.id : activeTabId;
       updatePending();
     }

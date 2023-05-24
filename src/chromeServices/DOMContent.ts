@@ -89,7 +89,7 @@ const receiveMessage = (
     case "GET_SNAP":
     case "IS_FLASK":
     case "SYNC":
-      chrome.runtime.sendMessage({ type: msg.type }, (res) => sendResponse(res));
+      chrome.runtime.sendMessage({ type: msg.type }).then((res) => sendResponse(res));
       return true;
     // @ts-ignore
     case "UPDATE_PENDING":
