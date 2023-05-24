@@ -1,6 +1,5 @@
 import EntryContent from "../components/EntryContent";
 import NeverSaveBar from "../components/NeverSaveBar";
-import SyncPasswordsBar from "../components/SyncPasswordsBar";
 import TopBar from "../components/TopBar";
 import { DOMMessage, DOMMessageResponse } from "../types";
 import Button from "../ui/forms/Button";

@@ -1,15 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import "./App.css";
-import DisplayCredentials from "./components/DisplayCredentials";
 import NeverSave from "./pages/NeverSave";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential } from "./types";
-import Button from "./ui/forms/Button";
 import { connectSnap, getSnap, requestCredentials, sendAutofill, sendSync } from "./utils/snap";
-import TopBar from "./components/TopBar";
-import { KeychainLogo } from "./components/icons/KeychainLogo";
-import { Chain } from "./components/icons/Chain";
-import { SNAP_ID } from "./config";
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
 import Pending from "./pages/Pending";

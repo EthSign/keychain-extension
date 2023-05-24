@@ -1,7 +1,5 @@
 import { Credential, DOMMessage } from "../types";
-import Button from "../ui/forms/Button";
 import _ from "lodash";
-import CredentialRow from "./CredentialRow";
 import { Locked } from "./icons/Locked";
 import EntryContent from "./EntryContent";
 
@@ -9,7 +7,6 @@ interface DisplayCredentialsProps {
   url?: string;
   credentials?: Credential | null;
   handleCredentials: (creds: Credential) => void;
-  handleSync: () => Promise<boolean | undefined>;
   loading?: boolean;
   selectCallback?: (credential: {
     address?: string | undefined;
@@ -21,7 +18,7 @@ interface DisplayCredentialsProps {
 }
 
 function DisplayCredentials(props: DisplayCredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, loading = false, selectCallback } = props;
+  const { url, credentials, handleCredentials, loading = false, selectCallback } = props;
 
   const removeCredential = async (username: string) => {
     chrome.tabs &&

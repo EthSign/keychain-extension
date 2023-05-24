@@ -37,7 +37,6 @@ function Credentials(props: CredentialsProps) {
           url={url}
           credentials={credentials}
           handleCredentials={handleCredentials}
-          handleSync={handleSync}
           loading={loading}
           selectCallback={selectCallback}
         />
