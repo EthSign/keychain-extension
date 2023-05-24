@@ -3,6 +3,7 @@ import Button from "../ui/forms/Button";
 import _ from "lodash";
 import CredentialRow from "./CredentialRow";
 import { Locked } from "./icons/Locked";
+import EntryContent from "./EntryContent";
 
 interface DisplayCredentialsProps {
   url?: string;
@@ -10,10 +11,17 @@ interface DisplayCredentialsProps {
   handleCredentials: (creds: Credential) => void;
   handleSync: () => Promise<boolean | undefined>;
   loading?: boolean;
+  selectCallback?: (credential: {
+    address?: string | undefined;
+    timestamp: number;
+    url: string;
+    username: string;
+    password: string;
+  }) => void;
 }
 
 function DisplayCredentials(props: DisplayCredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, loading = false } = props;
+  const { url, credentials, handleCredentials, handleSync, loading = false, selectCallback } = props;
 
   const removeCredential = async (username: string) => {
     chrome.tabs &&
@@ -57,14 +65,19 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
   }
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center w-full">
       {/* <Button onClick={handleSync} className="mr-auto mt-2">
         Sync
       </Button> */}
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
-        <div>
+        <div className="w-full divide-y divide-solid">
           {credentials.logins.map((cred, idx) => (
-            <CredentialRow key={`cred-${idx}`} credential={cred} removeCredential={removeCredential} />
+            <EntryContent
+              key={`cred-${idx}`}
+              credential={cred}
+              removeCredential={removeCredential}
+              selectCallback={selectCallback}
+            />
           ))}
         </div>
       ) : (

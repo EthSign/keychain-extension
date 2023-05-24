@@ -112,6 +112,38 @@ export const sendSync = async () => {
   });
 };
 
+/**
+ * Call to our content script to autofill a particular credential.
+ * @returns
+ */
+export const sendAutofill = async (username?: string, password?: string) => {
+  return new Promise<string | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "AUTOFILL",
+                data: {
+                  username,
+                  password
+                }
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? "");
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
 export const requestCredentials = async (url: string) => {
   return new Promise<Credential | undefined>((resolve) => {
     chrome.tabs

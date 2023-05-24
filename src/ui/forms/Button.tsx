@@ -77,7 +77,7 @@ function Button(props: ButtonProps) {
         if (filled) {
           return "text-white";
         }
-        return "text-blue-300 hover:text-opacity-90 active:text-opacity-80";
+        return "text-orange-500 hover:text-opacity-90 active:text-opacity-80";
       case "secondary":
         if (grouped && !groupedSelected) {
           return "text-slate-600";

@@ -125,8 +125,8 @@ function Pending(props: PendingProps) {
         </div>
       </div>
 
-      <div className="border border-gray-200 rounded-lg p-3 mb-8">
-        <EntryContent username={pending[url ?? ""].username} password={pending[url ?? ""].password} />
+      <div className="border border-gray-200 rounded-lg mb-8">
+        <EntryContent credential={{ ...pending[url ?? ""], timestamp: 0 }} />
       </div>
 
       <div className="flex flex-row gap-2 mb-8">

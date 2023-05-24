@@ -1,4 +1,5 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
+import { autofill } from "../utils/forms";
 
 let pending: any;
 
@@ -94,7 +95,7 @@ const receiveMessage = (
     // @ts-ignore
     case "UPDATE_PENDING":
       pending = msg.data;
-      console.log("[update_pending]", pending);
+      // console.log("[update_pending]", pending);
       const banner = document.getElementById("ethsign-keychain-banner");
       if (!pending) {
         banner && (banner.style.display = "none");
@@ -106,6 +107,16 @@ const receiveMessage = (
             (message.textContent = `Would you like to save your credentials for '${pending.username}' on this site?`);
         }
       }
+      break;
+    case "AUTOFILL":
+      const forms = document.forms;
+      let inputs: HTMLCollectionOf<HTMLInputElement> | null = null;
+      for (let i = 0; i < forms.length; i++) {
+        const form = forms[i];
+        inputs = form.getElementsByTagName<"input">("input");
+        autofill(inputs, msg.data.username, msg.data.password);
+      }
+      sendResponse({ data: "OK" });
       break;
   }
 };
@@ -146,27 +157,19 @@ document.addEventListener(
         const form = forms[i];
         // Get list of inputs from current form
         inputs = form.getElementsByTagName<"input">("input");
+        autofill(
+          inputs,
+          credentials && credentials.logins && credentials.logins.length > 0
+            ? credentials.logins[0].username
+            : undefined,
+          credentials && credentials.logins && credentials.logins.length > 0
+            ? credentials.logins[0].password
+            : undefined
+        );
         // Only modify onsubmit listener once for each form
         let listenerCreated = false;
         // Iterate through all inputs to find the username & password fields
         for (let j = 0; j < inputs.length; j++) {
-          // Autofill
-          if (
-            credentials &&
-            credentials.logins &&
-            credentials.logins.length > 0 &&
-            (inputs[j].getAttribute("name") === "username" || inputs[j].getAttribute("name") === "email")
-          ) {
-            inputs[j].value = credentials.logins[0].username;
-          } else if (
-            credentials &&
-            credentials.logins &&
-            credentials.logins.length > 0 &&
-            (inputs[j].getAttribute("name") === "password" || inputs[j].type === "password")
-          ) {
-            inputs[j].value = credentials.logins[0].password;
-          }
-
           // Create form submit listener
           if (
             !listenerCreated &&

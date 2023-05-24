@@ -5,7 +5,7 @@ import NeverSave from "./components/NeverSave";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
 import { Credential } from "./types";
 import Button from "./ui/forms/Button";
-import { connectSnap, getSnap, requestCredentials, sendSync } from "./utils/snap";
+import { connectSnap, getSnap, requestCredentials, sendAutofill, sendSync } from "./utils/snap";
 import TopBar from "./components/TopBar";
 import { KeychainLogo } from "./components/icons/KeychainLogo";
 import { Chain } from "./components/icons/Chain";
@@ -136,6 +136,15 @@ function App() {
           handleCredentials={handleCredentials}
           handleSync={handleSync}
           loading={loading}
+          selectCallback={(credential: {
+            address?: string | undefined;
+            timestamp: number;
+            url: string;
+            username: string;
+            password: string;
+          }) => {
+            sendAutofill(credential.username, credential.password).then(() => window.close());
+          }}
         />
       </div>
     </div>

@@ -10,7 +10,8 @@ export type DOMMessage = {
     | "CONNECT_SNAP"
     | "GET_SNAP"
     | "IS_FLASK"
-    | "SYNC";
+    | "SYNC"
+    | "AUTOFILL";
   login: any;
   action: any;
   settings: any;

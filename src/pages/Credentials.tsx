@@ -9,10 +9,17 @@ interface CredentialsProps {
   handleCredentials: (cred: Credential | null) => void;
   handleSync: () => Promise<boolean | undefined>;
   loading: boolean;
+  selectCallback?: (credential: {
+    address?: string | undefined;
+    timestamp: number;
+    url: string;
+    username: string;
+    password: string;
+  }) => void;
 }
 
 function Credentials(props: CredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, loading } = props;
+  const { url, credentials, handleCredentials, handleSync, loading, selectCallback } = props;
 
   return (
     <>
@@ -23,13 +30,14 @@ function Credentials(props: CredentialsProps) {
         <div className="mt-4 text-base">Select a password to autofill</div>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 border border-gray-200 rounded-lg">
         <DisplayCredentials
           url={url}
           credentials={credentials}
           handleCredentials={handleCredentials}
           handleSync={handleSync}
           loading={loading}
+          selectCallback={selectCallback}
         />
       </div>
 
