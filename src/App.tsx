@@ -2,8 +2,17 @@ import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import NeverSave from "./pages/NeverSave";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
-import { Credential, DOMMessage, DOMMessageResponse } from "./types";
-import { connectSnap, getSnap, requestCredentials, sendAutofill, sendSync } from "./utils/snap";
+import { Credential } from "./types";
+import {
+  clearPendingForSite,
+  connectSnap,
+  getSnap,
+  neverSaveForSite,
+  persistPendingForSite,
+  requestCredentials,
+  sendAutofill,
+  sendSync
+} from "./utils/snap";
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
 import Pending from "./pages/Pending";
@@ -95,86 +104,60 @@ function App() {
     return res;
   };
 
-  const clearPendingForSite = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            {
-              type: "CLEAR_PENDING_FOR_SITE",
-              data: { url: url }
-            } as DOMMessage,
-            (response) => {
-              if (response?.success) {
-                handlePending(Object.assign({}, pending, { [url]: undefined }));
-                window.close();
-              }
-            }
-          );
-        }
-      );
+  /**
+   * Clears pending entry for the current URL.
+   *
+   * @returns
+   */
+  const clearPending = () => {
+    if (!pending || !url || !pending[url]) {
+      return;
+    }
+
+    clearPendingForSite(url).then((res) => {
+      if (res) {
+        handlePending(Object.assign({}, pending, { [url]: undefined }));
+        window.close();
+      }
+    });
   };
 
+  /**
+   * Persists the pending entry for the current URL.
+   *
+   * @returns
+   */
   const persistPending = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            { type: "PERSIST", data: { url: url, user: pending[url], controlled: false } } as DOMMessage,
-            (response: DOMMessageResponse | any) => {
-              if (response?.data === "OK") {
-                requestCredentials(url).then((creds) => handleCredentials(creds));
-                const tempPending = Object.assign({}, pending, { [url]: undefined });
-                handlePending(tempPending);
-                window.close();
-              }
-            }
-          );
-        }
-      );
+    if (!pending || !url || !pending[url]) {
+      return;
+    }
+    persistPendingForSite(url, pending[url]).then((response) => {
+      if (response?.data === "OK") {
+        requestCredentials(url).then((creds) => handleCredentials(creds));
+        const tempPending = Object.assign({}, pending, { [url]: undefined });
+        handlePending(tempPending);
+        window.close();
+      }
+    });
   };
 
-  const neverSaveForSite = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        async (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          await chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            { type: "SET_NEVER_SAVE", data: { url: url, neverSave: true } } as DOMMessage,
-            (response: DOMMessageResponse) => {
-              if (response?.data === "OK") {
-                requestCredentials(url).then((creds) => handleCredentials(creds));
-                const tempPending = Object.assign({}, pending, { [url]: undefined });
-                handlePending(tempPending);
-                window.close();
-              }
-            }
-          );
-        }
-      );
+  /**
+   * Sets neverSave to true for the current URL.
+   *
+   * @returns
+   */
+  const neverSave = () => {
+    if (!pending || !url || !pending[url]) {
+      return;
+    }
+    neverSaveForSite(url).then((response) => {
+      if (response?.data === "OK") {
+        requestCredentials(url).then((creds) => handleCredentials(creds));
+        const tempPending = Object.assign({}, pending, { [url]: undefined });
+        handlePending(tempPending);
+        window.close();
+      }
+    });
   };
 
   return (
@@ -190,9 +173,9 @@ function App() {
               url={url}
               pending={pending}
               handlePending={handlePending}
-              clearPendingForSite={clearPendingForSite}
+              clearPendingForSite={clearPending}
               persistPending={persistPending}
-              neverSaveForSite={neverSaveForSite}
+              neverSaveForSite={neverSave}
             />
           </>
         ) : credentials?.neverSave ? (

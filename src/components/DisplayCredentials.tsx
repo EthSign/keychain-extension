@@ -1,8 +1,9 @@
-import { Credential, DOMMessage } from "../types";
+import { Credential } from "../types";
 import _ from "lodash";
 import { Locked } from "./icons/Locked";
 import EntryContent from "./EntryContent";
 import { LockedDark } from "./icons/LockedDark";
+import { removeCredentialForSite } from "../utils/snap";
 
 interface DisplayCredentialsProps {
   url?: string;
@@ -21,35 +22,29 @@ interface DisplayCredentialsProps {
 function DisplayCredentials(props: DisplayCredentialsProps) {
   const { url, credentials, handleCredentials, selectCallback } = props;
 
+  /**
+   * Removes a credential entry for the current URL.
+   *
+   * @param username - Username of the entry we are removing.
+   * @returns
+   */
   const removeCredential = async (username: string) => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            {
-              type: "REMOVE",
-              data: { url: url, username: username }
-            } as DOMMessage,
-            (response) => {
-              if (response?.data === "OK") {
-                const tmpCred = Object.assign({}, credentials);
-                if (tmpCred && tmpCred.logins) {
-                  const idx = _.findIndex(tmpCred.logins, { username: username });
-                  if (idx >= 0) {
-                    tmpCred.logins.splice(idx, 1);
-                  }
-                }
-                handleCredentials(tmpCred);
-              }
-            }
-          );
+    if (!url) {
+      return;
+    }
+
+    removeCredentialForSite(url, username).then((response) => {
+      if (response?.data === "OK") {
+        const tmpCred = Object.assign({}, credentials);
+        if (tmpCred && tmpCred.logins) {
+          const idx = _.findIndex(tmpCred.logins, { username: username });
+          if (idx >= 0) {
+            tmpCred.logins.splice(idx, 1);
+          }
         }
-      );
+        handleCredentials(tmpCred);
+      }
+    });
   };
 
   return (

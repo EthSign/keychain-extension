@@ -8,7 +8,7 @@ function TopBar() {
         <Logo />
       </div>
       <div className="my-auto cursor-pointer" onClick={() => window.close()}>
-        <Close />
+        <Close className="fill-gray-400 hover:fill-gray-500 active:fill-gray-400" />
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 import SyncPasswordsBar from "../components/SyncPasswordsBar";
 import TopBar from "../components/TopBar";
-import { Credential, DOMMessage, DOMMessageResponse } from "../types";
+import { Credential } from "../types";
 import Button from "../ui/forms/Button";
+import { enablePasswordSavingForSite } from "../utils/snap";
 
 interface NeverSaveProps {
   url?: string;
@@ -13,30 +14,22 @@ interface NeverSaveProps {
 function NeverSave(props: NeverSaveProps) {
   const { url, credentials, handleCredentials, handleSync } = props;
 
+  /**
+   * Sets neverSave to false for the current URL.
+   *
+   * @returns
+   */
   const enablePasswordSaving = () => {
     if (!url) {
       return;
     }
 
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            { type: "SET_NEVER_SAVE", data: { url: url, neverSave: false } } as DOMMessage,
-            (response: DOMMessageResponse) => {
-              if (response?.data === "OK") {
-                // Set neverSave to false locally since we successfully changed the db
-                handleCredentials(Object.assign({}, credentials, { neverSave: false }));
-              }
-            }
-          );
-        }
-      );
+    enablePasswordSavingForSite(url).then((response) => {
+      if (response?.data === "OK") {
+        // Set neverSave to false locally since we successfully changed the db
+        handleCredentials(Object.assign({}, credentials, { neverSave: false }));
+      }
+    });
   };
 
   return (

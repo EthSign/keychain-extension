@@ -55,11 +55,11 @@ function Button(props: ButtonProps) {
     }
 
     if (disabled) {
-      return `bg-gray-24 border-transparent`;
+      return `bg-primary-200 border-transparent`;
     }
     switch (style) {
       case "primary":
-        return "bg-orange-500 border-primary-600 dark:border-primary-900";
+        return "bg-primary-900 hover:bg-primary-700 active:bg-primary-900 border-transparent";
       case "secondary":
         return "bg-white border-gray-200 dark:bg-transparent dark:border-white/20";
       case "tertiary":
@@ -77,7 +77,7 @@ function Button(props: ButtonProps) {
         if (filled) {
           return "text-white";
         }
-        return "text-orange-500 hover:text-opacity-90 active:text-opacity-80";
+        return "text-primary-700 hover:text-primary-800 active:text-primary-700";
       case "secondary":
         if (grouped && !groupedSelected) {
           return "text-slate-600";
@@ -139,9 +139,9 @@ function Button(props: ButtonProps) {
 
   const disabledLoading = () => {
     if (filled) {
-      return "disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none";
+      return "disabled:border-primary-200 disabled:bg-primary-100 disabled:text-white disabled:cursor-not-allowed disabled:shadow-none";
     } else {
-      return "disabled:text-opacity-80 disabled:cursor-not-allowed";
+      return "disabled:text-gray-300 disabled:cursor-not-allowed";
     }
   };
 

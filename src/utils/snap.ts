@@ -1,7 +1,8 @@
-import { Credential, DOMMessage } from "../types";
+import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 
 /**
  * Call to content script for connecting to our snap.
+ *
  * @returns
  */
 export const connectSnap = async () => {
@@ -30,6 +31,7 @@ export const connectSnap = async () => {
 
 /**
  * Call to our content script for getting our snap.
+ *
  * @returns
  */
 export const getSnap = async () => {
@@ -58,6 +60,7 @@ export const getSnap = async () => {
 
 /**
  * Call to our content script to determine if MetaMask Flask is installed.
+ *
  * @returns
  */
 export const isFlask = async () => {
@@ -86,6 +89,7 @@ export const isFlask = async () => {
 
 /**
  * Call to our content script to sync local state with remote Arweave state.
+ *
  * @returns
  */
 export const sendSync = async () => {
@@ -114,6 +118,7 @@ export const sendSync = async () => {
 
 /**
  * Call to our content script to autofill a particular credential.
+ *
  * @returns
  */
 export const sendAutofill = async (username?: string, password?: string) => {
@@ -144,6 +149,12 @@ export const sendAutofill = async (username?: string, password?: string) => {
   });
 };
 
+/**
+ * Requests credentials for the provided URL.
+ *
+ * @param url - URL to get credentials for.
+ * @returns
+ */
 export const requestCredentials = async (url: string) => {
   return new Promise<Credential | undefined>((resolve) => {
     chrome.tabs
@@ -173,6 +184,178 @@ export const requestCredentials = async (url: string) => {
                 };
               }) => {
                 resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Persists the pending entry for the provided URL.
+ *
+ * @param url - URL we will clear pending entries for.
+ * @returns
+ */
+export const clearPendingForSite = (url: string) => {
+  return new Promise<any | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            if (!url) {
+              resolve(undefined);
+            }
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "CLEAR_PENDING_FOR_SITE",
+                data: { url: url }
+              } as DOMMessage,
+              (response) => {
+                if (response?.success) {
+                  resolve(Object.assign({}, pending, { [url]: undefined }));
+                }
+                resolve(undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Persists the pending entry for the provided URL.
+ *
+ * @param url - URL we are persisting the pending entry for.
+ * @param user - Data we will persist.
+ * @returns
+ */
+export const persistPendingForSite = (
+  url: string,
+  user: {
+    url: string;
+    username: string;
+    password: string;
+    update?: boolean | undefined;
+    controlled?: string | undefined;
+  }
+) => {
+  return new Promise<any | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            if (!url) {
+              resolve(undefined);
+            }
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              { type: "PERSIST", data: { url: url, user: user, controlled: false } } as DOMMessage,
+              (response: DOMMessageResponse | any) => {
+                resolve(response);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Sets neverSave to true for the provided URL.
+ *
+ * @param url - URL we are setting neverSave to true for.
+ * @returns
+ */
+export const neverSaveForSite = (url: string) => {
+  return new Promise<any | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          async (tabs) => {
+            if (!url) {
+              resolve(undefined);
+            }
+            await chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              { type: "SET_NEVER_SAVE", data: { url: url, neverSave: true } } as DOMMessage,
+              (response: DOMMessageResponse) => {
+                resolve(response);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Sets neverSave to false for the provided URL.
+ *
+ * @param url - URL we are setting neverSave to false for.
+ * @returns
+ */
+export const enablePasswordSavingForSite = (url: string) => {
+  return new Promise<any | undefined>((resolve) => {
+    if (!url) {
+      return undefined;
+    }
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              { type: "SET_NEVER_SAVE", data: { url: url, neverSave: false } } as DOMMessage,
+              (response: DOMMessageResponse) => {
+                resolve(response);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Removes a credential entry for the provided URL.
+ *
+ * @param url - URL we will remove a credential entry from.
+ * @param username - Username of the credential entry to be removed.
+ * @returns
+ */
+export const removeCredentialForSite = (url: string, username: string) => {
+  return new Promise<any | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "REMOVE",
+                data: { url: url, username: username }
+              } as DOMMessage,
+              (response) => {
+                resolve(response);
               }
             );
           }

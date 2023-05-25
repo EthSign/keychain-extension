@@ -1,7 +1,6 @@
 import EntryContent from "../components/EntryContent";
 import NeverSaveBar from "../components/NeverSaveBar";
 import TopBar from "../components/TopBar";
-import { DOMMessage, DOMMessageResponse } from "../types";
 import Button from "../ui/forms/Button";
 
 interface PendingProps {

@@ -8,7 +8,10 @@ function SyncPasswordsBar(props: SyncPasswordsBarProps) {
     <div className="flex justify-center text-center">
       <div className="text-base text-gray-900 dark:text-white">
         Saved passwords before?{" "}
-        <span className="text-orange-500 cursor-pointer underline" onClick={syncPasswords}>
+        <span
+          className="text-primary-700 hover:text-primary-800 active:text-primary-700 cursor-pointer underline select-none"
+          onClick={syncPasswords}
+        >
           Sync passwords
         </span>
       </div>
