@@ -3,7 +3,9 @@ import _ from "lodash";
 import { StreamProvider, createExternalExtensionProvider } from "@metamask/providers";
 import { SNAP_ID, SNAP_VERSION } from "../config";
 
-let activeTabId: number, activeWindowId: number;
+let activeTabId: number,
+  activeWindowId: number,
+  initialSync = false;
 
 /// Begin snap functions
 let provider: StreamProvider | undefined = undefined;
@@ -41,6 +43,8 @@ const checkProviderStatus = async () => {
     //   })
     //   .catch((err) => console.log(err));
   }
+
+  return provider && provider.isConnected();
 };
 
 /**
@@ -119,8 +123,17 @@ const isFlask = async () => {
  * @returns
  */
 const getPassword = async (url: string) => {
-  await checkProviderStatus();
+  const success = await checkProviderStatus();
+  if (!success) {
+    return undefined;
+  }
   if (provider) {
+    if (!initialSync) {
+      const success = await sync();
+      if (success) {
+        initialSync = true;
+      }
+    }
     return await provider.request({
       method: "wallet_invokeSnap",
       params: {
@@ -138,9 +151,10 @@ const getPassword = async (url: string) => {
  * @param {*} url The URL to set a password for.
  * @param {*} username The username to set a password for.
  * @param {*} password The password to set.
+ * @param {*} controlled Whether or not this entry is controlled by an API.
  * @returns
  */
-const setPassword = async (url: string, username: string, password: string) => {
+const setPassword = async (url: string, username: string, password: string, controlled?: boolean) => {
   await checkProviderStatus();
   if (provider) {
     return await provider.request({
@@ -149,7 +163,7 @@ const setPassword = async (url: string, username: string, password: string) => {
         snapId: SNAP_ID,
         request: {
           method: "set_password",
-          params: { website: url, username: username, password: password }
+          params: { website: url, username: username, password: password, controlled: controlled }
         }
       }
     });
@@ -185,15 +199,19 @@ const removePassword = async (url: string, username: string) => {
 const sync = async () => {
   await checkProviderStatus();
   if (provider) {
-    return await provider.request({
-      method: "wallet_invokeSnap",
-      params: {
-        snapId: SNAP_ID,
-        request: {
-          method: "sync"
+    return await provider
+      .request({
+        method: "wallet_invokeSnap",
+        params: {
+          snapId: SNAP_ID,
+          request: {
+            method: "sync"
+          }
         }
-      }
-    });
+      })
+      .catch(() => {
+        return false;
+      });
   }
 };
 
@@ -232,10 +250,13 @@ function listener(message: any, sender: any, sendResponse: Function) {
   }
 
   // Only interact with messages initiated from the chrome extension origin
-  // if (!sender.origin.startsWith("chrome-extension")) {
-  //   console.log("Ignoring message.");
-  //   return;
-  // }
+  if (
+    !sender.origin.startsWith("chrome-extension") &&
+    (message.type === "CONNECT_SNAP" || message.type === "GET_SNAP" || message.type === "IS_FLASK")
+  ) {
+    console.log("Ignoring message.");
+    return;
+  }
 
   if (message.type === "PERSIST") {
     // This gets called from notifications.js when the user clicks "Save" on the banner
@@ -352,7 +373,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
       });
     return true;
   } else if (message.type === "SET_PASSWORD") {
-    setPassword(message.data.url, message.data.username, message.data.password).then((res) => {
+    setPassword(message.data.url, message.data.username, message.data.password, message.data.controlled).then((res) => {
       sendResponse({ data: res });
     });
     return true;

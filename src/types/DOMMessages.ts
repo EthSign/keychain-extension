@@ -34,5 +34,12 @@ export type DOMMessageResponse = {
 export type Credential = {
   timestamp: number;
   neverSave?: boolean;
-  logins: { address?: string; timestamp: number; url: string; username: string; password: string }[];
+  logins: {
+    address?: string;
+    timestamp: number;
+    url: string;
+    username: string;
+    password: string;
+    controlled?: string;
+  }[];
 };

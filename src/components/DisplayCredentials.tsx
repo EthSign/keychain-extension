@@ -14,6 +14,7 @@ interface DisplayCredentialsProps {
     url: string;
     username: string;
     password: string;
+    controlled?: string;
   }) => void;
 }
 

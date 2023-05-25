@@ -27,7 +27,8 @@ const receiveMessage = (
   switch (msg.type) {
     case "PERSIST":
       let username: string | undefined = undefined,
-        password: string | undefined = undefined;
+        password: string | undefined = undefined,
+        controlled: boolean | undefined = msg.data.controlled;
       if (msg.data.user) {
         username = msg.data.user.username;
         password = msg.data.user.password;
@@ -46,7 +47,8 @@ const receiveMessage = (
           data: {
             url: msg.data.url,
             username: username,
-            password: password
+            password: password,
+            controlled: controlled
           }
         },
         (res) => {

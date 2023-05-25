@@ -13,6 +13,7 @@ interface PendingProps {
       username: string;
       password: string;
       update?: boolean | undefined;
+      controlled?: string;
     }
   >;
   handlePending: React.Dispatch<
@@ -29,90 +30,13 @@ interface PendingProps {
       | undefined
     >
   >;
+  clearPendingForSite: () => void;
+  persistPending: () => void;
+  neverSaveForSite: () => void;
 }
 
 function Pending(props: PendingProps) {
-  const { url, pending, handlePending } = props;
-
-  const clearPendingForSite = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            {
-              type: "CLEAR_PENDING_FOR_SITE",
-              data: { url: url }
-            } as DOMMessage,
-            (response) => {
-              if (response?.success) {
-                handlePending(Object.assign({}, pending, { [url]: undefined }));
-                window.close();
-              }
-            }
-          );
-        }
-      );
-  };
-
-  const persistPending = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            { type: "PERSIST", data: { url: url, user: pending[url] } } as DOMMessage,
-            (response: DOMMessageResponse | any) => {
-              if (response?.data === "OK") {
-                const tempPending = Object.assign({}, pending, { [url]: undefined });
-                handlePending(tempPending);
-                window.close();
-              }
-            }
-          );
-        }
-      );
-  };
-
-  const neverSaveForSite = () => {
-    chrome.tabs &&
-      chrome.tabs.query(
-        {
-          active: true,
-          currentWindow: true
-        },
-        async (tabs) => {
-          if (!pending || !url || !pending[url]) {
-            return;
-          }
-          await chrome.tabs.sendMessage(
-            tabs[0].id || 0,
-            { type: "SET_NEVER_SAVE", data: { url: url, neverSave: true } } as DOMMessage,
-            (response: DOMMessageResponse) => {
-              if (response?.data === "OK") {
-                const tempPending = Object.assign({}, pending, { [url]: undefined });
-                handlePending(tempPending);
-                window.close();
-              }
-            }
-          );
-        }
-      );
-  };
+  const { url, pending, handlePending, clearPendingForSite, persistPending, neverSaveForSite } = props;
 
   return (
     <>

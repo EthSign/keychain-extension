@@ -12,6 +12,7 @@ interface EntryContentProps {
     url: string;
     username: string;
     password: string;
+    controlled?: string;
   };
   removeCredential?: (username: string) => Promise<void>;
   selectCallback?: (credential: {
@@ -62,6 +63,7 @@ function EntryContent(props: EntryContentProps) {
         </div>
         {selectCallback ? (
           <>
+            {credential.controlled ? credential.controlled : null}
             <Button filled={false} shadow={false} onClick={() => selectCallback(credential)}>
               Select
             </Button>

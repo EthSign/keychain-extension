@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import "./App.css";
 import NeverSave from "./pages/NeverSave";
 import { MetaMaskActions, MetaMaskContext } from "./hooks";
-import { Credential } from "./types";
+import { Credential, DOMMessage, DOMMessageResponse } from "./types";
 import { connectSnap, getSnap, requestCredentials, sendAutofill, sendSync } from "./utils/snap";
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
@@ -11,7 +11,9 @@ import { Spinner } from "./components/icons/Spinner";
 
 function App() {
   const [pending, handlePending] =
-    useState<Record<string, { url: string; username: string; password: string; update?: boolean }>>();
+    useState<
+      Record<string, { url: string; username: string; password: string; update?: boolean; controlled?: string }>
+    >();
   const [url, handleUrl] = useState<string>();
   const [credentials, handleCredentials] = useState<Credential | null>();
   const [state, dispatch] = useContext(MetaMaskContext);
@@ -93,6 +95,88 @@ function App() {
     return res;
   };
 
+  const clearPendingForSite = () => {
+    chrome.tabs &&
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true
+        },
+        (tabs) => {
+          if (!pending || !url || !pending[url]) {
+            return;
+          }
+          chrome.tabs.sendMessage(
+            tabs[0].id || 0,
+            {
+              type: "CLEAR_PENDING_FOR_SITE",
+              data: { url: url }
+            } as DOMMessage,
+            (response) => {
+              if (response?.success) {
+                handlePending(Object.assign({}, pending, { [url]: undefined }));
+                window.close();
+              }
+            }
+          );
+        }
+      );
+  };
+
+  const persistPending = () => {
+    chrome.tabs &&
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true
+        },
+        (tabs) => {
+          if (!pending || !url || !pending[url]) {
+            return;
+          }
+          chrome.tabs.sendMessage(
+            tabs[0].id || 0,
+            { type: "PERSIST", data: { url: url, user: pending[url], controlled: false } } as DOMMessage,
+            (response: DOMMessageResponse | any) => {
+              if (response?.data === "OK") {
+                requestCredentials(url).then((creds) => handleCredentials(creds));
+                const tempPending = Object.assign({}, pending, { [url]: undefined });
+                handlePending(tempPending);
+                window.close();
+              }
+            }
+          );
+        }
+      );
+  };
+
+  const neverSaveForSite = () => {
+    chrome.tabs &&
+      chrome.tabs.query(
+        {
+          active: true,
+          currentWindow: true
+        },
+        async (tabs) => {
+          if (!pending || !url || !pending[url]) {
+            return;
+          }
+          await chrome.tabs.sendMessage(
+            tabs[0].id || 0,
+            { type: "SET_NEVER_SAVE", data: { url: url, neverSave: true } } as DOMMessage,
+            (response: DOMMessageResponse) => {
+              if (response?.data === "OK") {
+                requestCredentials(url).then((creds) => handleCredentials(creds));
+                const tempPending = Object.assign({}, pending, { [url]: undefined });
+                handlePending(tempPending);
+                window.close();
+              }
+            }
+          );
+        }
+      );
+  };
+
   return (
     <div className="font-plex dark:bg-black-900 dark:text-white">
       <div className="p-8">
@@ -102,7 +186,14 @@ function App() {
           </>
         ) : pending && url && pending[url] ? (
           <>
-            <Pending url={url} pending={pending} handlePending={handlePending} />
+            <Pending
+              url={url}
+              pending={pending}
+              handlePending={handlePending}
+              clearPendingForSite={clearPendingForSite}
+              persistPending={persistPending}
+              neverSaveForSite={neverSaveForSite}
+            />
           </>
         ) : credentials?.neverSave ? (
           <>
