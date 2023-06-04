@@ -94,10 +94,8 @@ const receiveMessage = (
     case "SYNC":
       chrome.runtime.sendMessage({ type: msg.type }).then((res) => sendResponse(res));
       return true;
-    // @ts-ignore
     case "UPDATE_PENDING":
       pending = msg.data;
-      // console.log("[update_pending]", pending);
       const banner = document.getElementById("ethsign-keychain-banner");
       if (!pending) {
         banner && (banner.style.display = "none");

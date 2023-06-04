@@ -11,7 +11,8 @@ export type DOMMessage = {
     | "GET_SNAP"
     | "IS_FLASK"
     | "SYNC"
-    | "AUTOFILL";
+    | "AUTOFILL"
+    | "UPDATE_PENDING";
   login: any;
   action: any;
   settings: any;
