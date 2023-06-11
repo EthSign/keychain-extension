@@ -238,6 +238,19 @@ const setNeverSave = async (url: string, neverSave: string) => {
 };
 
 /**
+ * Clears the keychain dataset values set on forms that have been processed.
+ */
+function clearAllFormsKeychainDataset() {
+  chrome.tabs.sendMessage(
+    activeTabId,
+    {
+      type: "CLEAR_FORM_DATASET"
+    },
+    () => {}
+  );
+}
+
+/**
  * Handle requests for passwords
  */
 function listener(message: any, sender: any, sendResponse: Function) {
@@ -259,6 +272,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
   }
 
   if (message.type === "PERSIST") {
+    clearAllFormsKeychainDataset();
     // This gets called from notifications.js when the user clicks "Save" on the banner
     chrome.tabs.sendMessage(
       activeTabId,
@@ -271,6 +285,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
 
     return true;
   } else if (message.type === "NEVER_SAVE") {
+    clearAllFormsKeychainDataset();
     // This gets called from notifications.js when the user clicks "Never Save" on the banner
     chrome.tabs.sendMessage(
       activeTabId,
@@ -308,9 +323,14 @@ function listener(message: any, sender: any, sendResponse: Function) {
           .then(() => {
             updatePending();
           });
+      } else {
+        // Same username/password combo was entered that is already saved.
+        // Reset the form flags in case the user enters another username/password combo.
+        clearAllFormsKeychainDataset();
       }
     });
   } else if (message.type === "CLEAR_PENDING_FOR_SITE") {
+    clearAllFormsKeychainDataset();
     chrome.storage.local.get("pending").then((obj) => {
       if (!obj) {
         obj = {};
@@ -373,6 +393,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
       });
     return true;
   } else if (message.type === "SET_PASSWORD") {
+    clearAllFormsKeychainDataset();
     setPassword(message.data.url, message.data.username, message.data.password, message.data.controlled).then((res) => {
       sendResponse({ data: res });
     });
@@ -388,6 +409,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
     });
     return true;
   } else if (message.type === "SET_NEVER_SAVE") {
+    clearAllFormsKeychainDataset();
     setNeverSave(message.data.url, message.data.neverSave).then((res) => {
       sendResponse({ data: res });
     });
@@ -489,7 +511,7 @@ chrome.tabs.onActivated.addListener(async function (activeInfo) {
  * Listen for when a tab updates
  */
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (activeTabId === tabId && changeInfo.status === "complete") {
+  if (activeTabId === tabId && tab.active && changeInfo.status === "complete") {
     if (!tab.url?.startsWith("chrome")) {
       updateExtensionIcon(await getTabBaseUrl((activeTabId = tabId)));
       updatePending();

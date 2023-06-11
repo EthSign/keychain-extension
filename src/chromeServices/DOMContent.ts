@@ -1,4 +1,10 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
+import {
+  clearAllFormsKeychainDataset,
+  formSubmitted,
+  getFormsWithPasswordInputs,
+  listenToSubmitButton
+} from "../utils/autofill";
 import { autofill } from "../utils/forms";
 
 let pending: any;
@@ -118,6 +124,10 @@ const receiveMessage = (
       }
       sendResponse({ data: "OK" });
       break;
+    case "CLEAR_FORM_DATASET":
+      clearAllFormsKeychainDataset();
+      sendResponse({ data: "OK" });
+      break;
   }
 };
 
@@ -145,18 +155,20 @@ document.addEventListener(
       if (url.startsWith("chrome")) {
         return;
       }
+      // Get credentials for the current site
       const credentials: Credential | undefined = await new Promise((resolve) => {
         chrome.runtime.sendMessage({ type: "GET_PASSWORD", data: { url: url } }, (response) => {
           resolve(response?.data ?? undefined);
         });
       });
       // Get list of forms
-      const forms = document.forms;
+      const forms = getFormsWithPasswordInputs();
       let inputs: HTMLCollectionOf<HTMLInputElement> | null = null;
       for (let i = 0; i < forms.length; i++) {
         const form = forms[i];
         // Get list of inputs from current form
-        inputs = form.getElementsByTagName<"input">("input");
+        inputs = form.form.getElementsByTagName<"input">("input");
+        // Attempt to autofill (if a credential exists for this site)
         autofill(
           inputs,
           credentials && credentials.logins && credentials.logins.length > 0
@@ -166,52 +178,12 @@ document.addEventListener(
             ? credentials.logins[0].password
             : undefined
         );
-        // Only modify onsubmit listener once for each form
-        let listenerCreated = false;
-        // Iterate through all inputs to find the username & password fields
-        for (let j = 0; j < inputs.length; j++) {
-          // Create form submit listener
-          if (
-            !listenerCreated &&
-            (inputs[j].getAttribute("name") === "username" ||
-              inputs[j].getAttribute("name") === "email" ||
-              inputs[j].getAttribute("name") === "password")
-          ) {
-            listenerCreated = true;
-            form.submitOrig = form.onsubmit;
-            // eslint-disable-next-line no-loop-func
-            form.onsubmit = async (event: SubmitEvent) => {
-              event.preventDefault();
-              const creds: Credential | null = await new Promise((resolve) => {
-                chrome.runtime.sendMessage({ type: "GET_PASSWORD", data: { url: url } }, (res) => resolve(res));
-              });
-              if (!creds || !creds.neverSave) {
-                const tmpInputs = form.getElementsByTagName<"input">("input");
-                let username = "",
-                  password = "";
-                for (let j = 0; j < tmpInputs.length; j++) {
-                  // We will prefer to save the "username" input value over a "email" input value
-                  if (tmpInputs[j].getAttribute("name") === "email" && username === "") {
-                    username = tmpInputs[j].value;
-                  } else if (tmpInputs[j].getAttribute("name") === "username") {
-                    username = tmpInputs[j].value;
-                  } else if (tmpInputs[j].getAttribute("name") === "password" || tmpInputs[j].type === "password") {
-                    password = tmpInputs[j].value;
-                  }
-                }
-                // Log url/username/password combo on form submit
-                chrome.runtime.sendMessage({
-                  type: "FORM_SUBMIT",
-                  url: url,
-                  username: username,
-                  password: password,
-                  credentials: creds
-                });
-              }
-              form.submit();
-            };
-          }
-        }
+
+        // Add submit listener to the form and click listener to the submit button
+        // that is most likely affiliated with the form
+        form.form.removeEventListener("submit", formSubmitted, false);
+        form.form.addEventListener("submit", formSubmitted, false);
+        listenToSubmitButton(form.form);
       }
     }
   },

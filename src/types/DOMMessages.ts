@@ -12,6 +12,7 @@ export type DOMMessage = {
     | "IS_FLASK"
     | "SYNC"
     | "AUTOFILL"
+    | "CLEAR_FORM_DATASET"
     | "UPDATE_PENDING";
   login: any;
   action: any;

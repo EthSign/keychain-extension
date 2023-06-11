@@ -218,7 +218,7 @@ export const clearPendingForSite = (url: string) => {
               } as DOMMessage,
               (response) => {
                 if (response?.success) {
-                  resolve(Object.assign({}, pending, { [url]: undefined }));
+                  resolve({ success: true });
                 }
                 resolve(undefined);
               }
