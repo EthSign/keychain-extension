@@ -1,12 +1,12 @@
 {
-  "name": "Web3Pass",
+  "name": "EthSign Keychain",
   "description": "Store and protect login credentials with your MetaMask wallet.",
   "version": "1.0",
   "manifest_version": 3,
   "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "action": {
     "default_popup": "index.html",
-    "default_title": "Open Web3Pass"
+    "default_title": "Open EthSign Keychain"
   },
   "web_accessible_resources": [
     {
@@ -19,7 +19,7 @@
     "48": "logo192.png",
     "128": "logo192.png"
   },
-  "short_name": "Web3Pass",
+  "short_name": "Keychain",
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],

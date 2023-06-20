@@ -489,10 +489,10 @@ async function updateExtensionIcon(tabUrl: string) {
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = getBaseUrl(tabUrl);
   if (obj.pending && obj.pending[url]) {
-    chrome.action.setTitle({ title: "Open Web3Pass" });
+    chrome.action.setTitle({ title: "Open Keychain" });
     chrome.action.setIcon({ path: "/images.png" });
   } else {
-    chrome.action.setTitle({ title: "Web3Pass Alert" });
+    chrome.action.setTitle({ title: "Keychain Alert" });
     chrome.action.setIcon({
       path: "/images2.png"
     });
