@@ -98,7 +98,11 @@ const receiveMessage = (
     case "GET_SNAP":
     case "IS_FLASK":
     case "SYNC":
+    case "EXPORT":
       chrome.runtime.sendMessage({ type: msg.type }).then((res) => sendResponse(res));
+      return true;
+    case "IMPORT":
+      chrome.runtime.sendMessage({ type: msg.type, data: msg.data }, (res) => sendResponse(res));
       return true;
     case "UPDATE_PENDING":
       pending = msg.data;

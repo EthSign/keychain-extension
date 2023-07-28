@@ -147,6 +147,54 @@ const getPassword = async (url: string) => {
 };
 
 /**
+ * Gets the exported state, in encrypted form.
+ *
+ * @returns
+ */
+const exportState = async () => {
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: SNAP_ID,
+        request: {
+          method: "export"
+        }
+      }
+    });
+  } else {
+    return undefined;
+  }
+};
+
+/**
+ * Import the data provided by the file provided by the user.
+ *
+ * @param data - Data extracted from the file provided by the user.
+ * @returns
+ */
+const importState = async (data: { nonce: string; data: string }) => {
+  await checkProviderStatus();
+  if (provider) {
+    return await provider.request({
+      method: "wallet_invokeSnap",
+      params: {
+        snapId: SNAP_ID,
+        request: {
+          method: "import",
+          params: {
+            data
+          }
+        }
+      }
+    });
+  } else {
+    return undefined;
+  }
+};
+
+/**
  * Update the password state for a given URL, username, and password combination.
  * @param {*} url The URL to set a password for.
  * @param {*} username The username to set a password for.
@@ -265,7 +313,11 @@ function listener(message: any, sender: any, sendResponse: Function) {
   // Only interact with messages initiated from the chrome extension origin
   if (
     !sender.origin.startsWith("chrome-extension") &&
-    (message.type === "CONNECT_SNAP" || message.type === "GET_SNAP" || message.type === "IS_FLASK")
+    (message.type === "CONNECT_SNAP" ||
+      message.type === "GET_SNAP" ||
+      message.type === "IS_FLASK" ||
+      message.type === "EXPORT" ||
+      message.type === "IMPORT")
   ) {
     console.log("Ignoring message.");
     return;
@@ -391,6 +443,16 @@ function listener(message: any, sender: any, sendResponse: Function) {
       .catch((err) => {
         sendResponse({ data: err.message });
       });
+    return true;
+  } else if (message.type === "EXPORT") {
+    exportState().then((res) => {
+      sendResponse({ data: res });
+    });
+    return true;
+  } else if (message.type === "IMPORT") {
+    importState(message.data).then((res) => {
+      sendResponse({ data: res });
+    });
     return true;
   } else if (message.type === "SET_PASSWORD") {
     clearAllFormsKeychainDataset();

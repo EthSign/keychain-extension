@@ -3,6 +3,7 @@
   "description": "Store and protect login credentials with your MetaMask wallet.",
   "version": "1.0",
   "manifest_version": 3,
+  "all_frames": false,
   "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "action": {
     "default_popup": "index.html",

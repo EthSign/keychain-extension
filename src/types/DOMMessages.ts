@@ -13,7 +13,9 @@ export type DOMMessage = {
     | "SYNC"
     | "AUTOFILL"
     | "CLEAR_FORM_DATASET"
-    | "UPDATE_PENDING";
+    | "UPDATE_PENDING"
+    | "EXPORT"
+    | "IMPORT";
   login: any;
   action: any;
   settings: any;

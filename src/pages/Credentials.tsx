@@ -1,7 +1,11 @@
+import { useState } from "react";
 import DisplayCredentials from "../components/DisplayCredentials";
+import ExportStateBar from "../components/ExportStateBar";
+import ImportStateBar from "../components/ImportStateBar";
 import SyncPasswordsBar from "../components/SyncPasswordsBar";
 import TopBar from "../components/TopBar";
 import { Credential } from "../types";
+import FileDropzone from "../components/FileDropzone";
 
 interface CredentialsProps {
   url?: string;
@@ -15,10 +19,35 @@ interface CredentialsProps {
     username: string;
     password: string;
   }) => void;
+  handleExportState: () => void;
+  handleImportState: (state: { nonce: string; data: string }) => void;
 }
 
 function Credentials(props: CredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, selectCallback } = props;
+  const { url, credentials, handleCredentials, handleSync, selectCallback, handleExportState, handleImportState } =
+    props;
+
+  const [importing, handleImporting] = useState(false);
+
+  if (importing) {
+    return (
+      <>
+        <TopBar />
+        <div className="my-8 flex flex-col items-center">
+          <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
+            {url}
+          </div>
+          <div className="text-2xl font-semibold mt-4">Import Credentials</div>
+          <FileDropzone
+            handleImportState={(state) => {
+              handleImporting(false);
+              handleImportState(state);
+            }}
+          />
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -47,6 +76,9 @@ function Credentials(props: CredentialsProps) {
       </div>
 
       <SyncPasswordsBar syncPasswords={handleSync} />
+
+      <ExportStateBar exportState={handleExportState} />
+      <ImportStateBar handleImporting={handleImporting} />
     </>
   );
 }

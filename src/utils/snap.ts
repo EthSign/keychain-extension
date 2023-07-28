@@ -117,6 +117,66 @@ export const sendSync = async () => {
 };
 
 /**
+ * Call to our content script to export the local password state.
+ *
+ * @returns JSON file to be downloaded to the user's computer.
+ */
+export const sendExportState = async () => {
+  return new Promise<{ success: boolean; data?: string; message?: string } | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "EXPORT"
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Call to our content script to import the data extracted from a JSON file on the user's machine.
+ *
+ * @param state - Data retrieved from the file provided by the user.
+ * @returns 'OK' if successfully imported or { success: boolean, message: string } if import failed.
+ */
+export const sendImportState = async (state: { nonce: string; data: string }) => {
+  return new Promise<{ success: boolean; data?: string; message?: string } | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "IMPORT",
+                data: JSON.stringify(state)
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
  * Call to our content script to autofill a particular credential.
  *
  * @returns

@@ -11,12 +11,15 @@ import {
   persistPendingForSite,
   requestCredentials,
   sendAutofill,
+  sendExportState,
+  sendImportState,
   sendSync
 } from "./utils/snap";
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
 import Pending from "./pages/Pending";
 import { Spinner } from "./components/icons/Spinner";
+import { download } from "./utils/files";
 
 function App() {
   const [pending, handlePending] =
@@ -102,6 +105,34 @@ function App() {
     }
     handleLoading(false);
     return res;
+  };
+
+  /**
+   * Exports the user's state to a file and updates the extension's loading message accordingly.
+   */
+  const handleExportState = async () => {
+    handleLoadingMessage("Exporting...");
+    handleLoading(true);
+    const res = await sendExportState();
+    handleLoading(false);
+    if (res?.success) {
+      download(res.data ?? "");
+    }
+  };
+
+  /**
+   * Imports a password state to the user's local machine. Updates the extension's loading message accordingly.
+   *
+   * @param state - The imported state, parsed from a json file on the user's machine.
+   */
+  const handleImportState = async (state: { nonce: string; data: string }) => {
+    handleLoadingMessage("Importing...");
+    handleLoading(true);
+    const res = await sendImportState(state);
+    handleLoading(false);
+    if (res?.success) {
+      download(res.data ?? "");
+    }
   };
 
   /**
@@ -203,6 +234,8 @@ function App() {
               }) => {
                 sendAutofill(credential.username, credential.password).then(() => window.close());
               }}
+              handleExportState={handleExportState}
+              handleImportState={handleImportState}
             />
           </>
         )}
