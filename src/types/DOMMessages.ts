@@ -15,7 +15,9 @@ export type DOMMessage = {
     | "CLEAR_FORM_DATASET"
     | "UPDATE_PENDING"
     | "EXPORT"
-    | "IMPORT";
+    | "IMPORT"
+    | "SET_SYNC_TO"
+    | "GET_SYNC_TO";
   login: any;
   action: any;
   settings: any;

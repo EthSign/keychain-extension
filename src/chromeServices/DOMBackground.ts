@@ -264,6 +264,55 @@ const sync = async () => {
 };
 
 /**
+ * Set the remote sync location for the snap.
+ *
+ * @returns
+ */
+const setSyncTo = async (syncTo: string) => {
+  await checkProviderStatus();
+  if (provider) {
+    return await provider
+      .request({
+        method: "wallet_invokeSnap",
+        params: {
+          snapId: SNAP_ID,
+          request: {
+            method: "set_sync_to",
+            params: { data: syncTo }
+          }
+        }
+      })
+      .catch(() => {
+        return null;
+      });
+  }
+};
+
+/**
+ * Get the remote sync location from the keychain snap.
+ *
+ * @returns
+ */
+const getSyncTo = async () => {
+  await checkProviderStatus();
+  if (provider) {
+    return await provider
+      .request({
+        method: "wallet_invokeSnap",
+        params: {
+          snapId: SNAP_ID,
+          request: {
+            method: "get_sync_to"
+          }
+        }
+      })
+      .catch(() => {
+        return null;
+      });
+  }
+};
+
+/**
  * Set whether or not we should save passwords for a given url.
  * @param {*} url URL for state we are trying to update.
  * @param {*} neverSave Boolean value for whether or not we should save the password state.
@@ -317,7 +366,8 @@ function listener(message: any, sender: any, sendResponse: Function) {
       message.type === "GET_SNAP" ||
       message.type === "IS_FLASK" ||
       message.type === "EXPORT" ||
-      message.type === "IMPORT")
+      message.type === "IMPORT" ||
+      message.type === "SET_SYNC_TO")
   ) {
     console.log("Ignoring message.");
     return;
@@ -467,6 +517,16 @@ function listener(message: any, sender: any, sendResponse: Function) {
     return true;
   } else if (message.type === "SYNC") {
     sync().then((res) => {
+      sendResponse({ data: res });
+    });
+    return true;
+  } else if (message.type === "SET_SYNC_TO") {
+    setSyncTo(message.data.syncTo).then((res) => {
+      sendResponse({ data: res });
+    });
+    return true;
+  } else if (message.type === "GET_SYNC_TO") {
+    getSyncTo().then((res) => {
       sendResponse({ data: res });
     });
     return true;

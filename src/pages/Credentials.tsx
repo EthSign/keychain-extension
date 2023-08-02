@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DisplayCredentials from "../components/DisplayCredentials";
 import ExportStateBar from "../components/ExportStateBar";
 import ImportStateBar from "../components/ImportStateBar";
@@ -6,6 +6,8 @@ import SyncPasswordsBar from "../components/SyncPasswordsBar";
 import TopBar from "../components/TopBar";
 import { Credential } from "../types";
 import FileDropzone from "../components/FileDropzone";
+import SyncToBar from "../components/SyncToBar";
+import { getSyncTo, setSyncTo } from "../utils/snap";
 
 interface CredentialsProps {
   url?: string;
@@ -28,6 +30,29 @@ function Credentials(props: CredentialsProps) {
     props;
 
   const [importing, handleImporting] = useState(false);
+  const [syncTo, handleSyncTo] = useState<string | null | undefined>("");
+
+  useEffect(() => {
+    (async () => {
+      const syncLoc = await getSyncTo();
+      if (syncLoc) {
+        handleSyncTo(syncLoc.toLowerCase());
+      } else {
+        handleSyncTo(syncLoc);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    console.log(syncTo);
+  }, [syncTo]);
+
+  const handleSetSyncTo = async (syncTo: string) => {
+    const res = await setSyncTo(syncTo);
+    if (res) {
+      handleSyncTo(res.toLowerCase());
+    }
+  };
 
   if (importing) {
     return (
@@ -79,6 +104,7 @@ function Credentials(props: CredentialsProps) {
 
       <ExportStateBar exportState={handleExportState} />
       <ImportStateBar handleImporting={handleImporting} />
+      <SyncToBar syncTo={syncTo} handleSetSyncTo={handleSetSyncTo} />
     </>
   );
 }

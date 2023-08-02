@@ -423,3 +423,64 @@ export const removeCredentialForSite = (url: string, username: string) => {
       : resolve(undefined);
   });
 };
+
+/**
+ * Set the remote sync location for the snap.
+ *
+ * @param syncTo - String consisting of "arweave", "aws", or "none".
+ * @returns String consisting of the remote sync location after updating the sync value.
+ */
+export const setSyncTo = (syncTo: string) => {
+  return new Promise<string | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "SET_SYNC_TO",
+                data: { syncTo }
+              } as DOMMessage,
+              (response) => {
+                console.log(response);
+                resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
+ * Get the remote sync location from the keychain snap.
+ *
+ * @returns String consisting of the remote sync location.
+ */
+export const getSyncTo = () => {
+  return new Promise<string | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "GET_SYNC_TO"
+              } as DOMMessage,
+              (response) => {
+                resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};

@@ -99,9 +99,11 @@ const receiveMessage = (
     case "IS_FLASK":
     case "SYNC":
     case "EXPORT":
-      chrome.runtime.sendMessage({ type: msg.type }).then((res) => sendResponse(res));
+    case "GET_SYNC_TO":
+      chrome.runtime.sendMessage({ type: msg.type }, (res) => sendResponse(res));
       return true;
     case "IMPORT":
+    case "SET_SYNC_TO":
       chrome.runtime.sendMessage({ type: msg.type, data: msg.data }, (res) => sendResponse(res));
       return true;
     case "UPDATE_PENDING":
