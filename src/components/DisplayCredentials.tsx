@@ -49,9 +49,6 @@ function DisplayCredentials(props: DisplayCredentialsProps) {
 
   return (
     <div className="flex flex-col items-center w-full">
-      {/* <Button onClick={handleSync} className="mr-auto mt-2">
-        Sync
-      </Button> */}
       {credentials && credentials.logins && credentials.logins.length > 0 ? (
         <div className="w-full divide-y divide-solid dark:divide-white/20">
           {credentials.logins.map((cred, idx) => (

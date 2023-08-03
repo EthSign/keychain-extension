@@ -7,13 +7,15 @@ import {
   clearPendingForSite,
   connectSnap,
   getSnap,
+  getSyncTo,
   neverSaveForSite,
   persistPendingForSite,
   requestCredentials,
   sendAutofill,
   sendExportState,
   sendImportState,
-  sendSync
+  sendSync,
+  setSyncTo
 } from "./utils/snap";
 import Connect from "./pages/Connect";
 import Credentials from "./pages/Credentials";
@@ -31,6 +33,7 @@ function App() {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [loading, handleLoading] = useState(false);
   const [loadingMessage, handleLoadingMessage] = useState("Loading...");
+  const [syncTo, handleSyncTo] = useState<string | null | undefined>("");
 
   useEffect(() => {
     loadPending();
@@ -48,9 +51,23 @@ function App() {
       handleLoading(true);
       const creds = await requestCredentials(url);
       handleCredentials(creds);
+
+      const syncLoc = await getSyncTo();
+      if (syncLoc) {
+        handleSyncTo(syncLoc.toLowerCase());
+      } else {
+        handleSyncTo(syncLoc);
+      }
       handleLoading(false);
     })();
   }, [state.installedSnap, state.isFlask, url]);
+
+  const handleSetSyncTo = async (syncTo: string) => {
+    const res = await setSyncTo(syncTo);
+    if (res) {
+      handleSyncTo(res.toLowerCase());
+    }
+  };
 
   const connectToMetaMask = async () => {
     try {
@@ -223,8 +240,10 @@ function App() {
             <Credentials
               url={url}
               credentials={credentials}
+              syncTo={syncTo}
               handleCredentials={handleCredentials}
               handleSync={handleSync}
+              handleSetSyncTo={handleSetSyncTo}
               selectCallback={(credential: {
                 address?: string | undefined;
                 timestamp: number;

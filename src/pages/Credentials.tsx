@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import DisplayCredentials from "../components/DisplayCredentials";
 import ExportStateBar from "../components/ExportStateBar";
 import ImportStateBar from "../components/ImportStateBar";
@@ -7,11 +7,11 @@ import TopBar from "../components/TopBar";
 import { Credential } from "../types";
 import FileDropzone from "../components/FileDropzone";
 import SyncToBar from "../components/SyncToBar";
-import { getSyncTo, setSyncTo } from "../utils/snap";
 
 interface CredentialsProps {
   url?: string;
   credentials?: Credential | null;
+  syncTo?: string | null;
   handleCredentials: (cred: Credential | null) => void;
   handleSync: () => Promise<boolean | undefined>;
   selectCallback?: (credential: {
@@ -23,36 +23,23 @@ interface CredentialsProps {
   }) => void;
   handleExportState: () => void;
   handleImportState: (state: { nonce: string; data: string }) => void;
+  handleSetSyncTo: (syncTo: string) => Promise<void>;
 }
 
 function Credentials(props: CredentialsProps) {
-  const { url, credentials, handleCredentials, handleSync, selectCallback, handleExportState, handleImportState } =
-    props;
+  const {
+    url,
+    credentials,
+    syncTo,
+    handleCredentials,
+    handleSync,
+    selectCallback,
+    handleExportState,
+    handleImportState,
+    handleSetSyncTo
+  } = props;
 
   const [importing, handleImporting] = useState(false);
-  const [syncTo, handleSyncTo] = useState<string | null | undefined>("");
-
-  useEffect(() => {
-    (async () => {
-      const syncLoc = await getSyncTo();
-      if (syncLoc) {
-        handleSyncTo(syncLoc.toLowerCase());
-      } else {
-        handleSyncTo(syncLoc);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    console.log(syncTo);
-  }, [syncTo]);
-
-  const handleSetSyncTo = async (syncTo: string) => {
-    const res = await setSyncTo(syncTo);
-    if (res) {
-      handleSyncTo(res.toLowerCase());
-    }
-  };
 
   if (importing) {
     return (
