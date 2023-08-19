@@ -577,7 +577,8 @@ async function updatePending(pending?: any) {
 }
 
 function getBaseUrl(url: string) {
-  let baseUrl = url.toString().slice(0, url.toString().indexOf("?") ?? url.toString().length);
+  const qIdx = url.toString().indexOf("?");
+  let baseUrl = url.toString().slice(0, qIdx > 0 ? qIdx : url.toString().length);
   // Remove trailing slash in url
   if (baseUrl.at(url.length - 1) === "/") {
     baseUrl = baseUrl.substring(0, baseUrl.length - 1);

@@ -96,8 +96,8 @@ function App() {
     chrome.tabs &&
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         let url = tabs ? tabs[0]?.url ?? "" : "";
-        const idx = url.toString().indexOf("?");
-        url = url.toString().slice(0, idx >= 0 ? idx : url.toString().length);
+        const qIdx = url.toString().indexOf("?");
+        url = url.toString().slice(0, qIdx >= 0 ? qIdx : url.toString().length);
 
         // Remove trailing slash
         if (url.at(url.length - 1) === "/") {

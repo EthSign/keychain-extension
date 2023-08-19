@@ -69,6 +69,13 @@ function EntryContent(props: EntryContentProps) {
             </Button>
           </>
         ) : null}
+        {removeCredential ? (
+          <>
+            <Button filled={false} shadow={false} onClick={() => removeCredential(credential.username)}>
+              D
+            </Button>
+          </>
+        ) : null}
       </div>
     </>
   );
