@@ -476,15 +476,6 @@ function listener(message: any, sender: any, sendResponse: Function) {
       sendResponse({ data: res });
     });
     return true;
-  } else if (message.type === "IS_FLASK") {
-    isFlask()
-      .then((res) => {
-        sendResponse({ data: res });
-      })
-      .catch(() => {
-        sendResponse({ data: false });
-      });
-    return true;
   } else if (message.type === "GET_PASSWORD") {
     getPassword(message.data.url)
       .then((res) => {

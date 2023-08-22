@@ -96,7 +96,6 @@ const receiveMessage = (
       return true;
     case "CONNECT_SNAP":
     case "GET_SNAP":
-    case "IS_FLASK":
     case "SYNC":
     case "EXPORT":
     case "GET_SYNC_TO":

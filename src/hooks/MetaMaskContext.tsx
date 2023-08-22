@@ -1,15 +1,13 @@
 import { createContext, Dispatch, ReactNode, Reducer, useEffect, useReducer } from "react";
 import { Snap } from "../types";
-import { getSnap, isFlask } from "../utils/snap";
+import { getSnap } from "../utils/snap";
 
 export type MetaMaskState = {
-  isFlask: boolean;
   installedSnap?: Snap;
   error?: Error;
 };
 
 const initialState: MetaMaskState = {
-  isFlask: false,
   installedSnap: undefined,
   error: undefined
 };
@@ -65,15 +63,6 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    async function detectFlask() {
-      const isFlaskDetected = await isFlask();
-
-      dispatch({
-        type: MetaMaskActions.SetFlaskDetected,
-        payload: isFlaskDetected
-      });
-    }
-
     async function detectSnapInstalled() {
       const installedSnap = await getSnap();
       dispatch({
@@ -81,15 +70,8 @@ export const MetaMaskProvider = ({ children }: { children: ReactNode }) => {
         payload: installedSnap
       });
     }
-
-    if (!state.isFlask) {
-      detectFlask();
-    }
-
-    if (state.isFlask) {
-      detectSnapInstalled();
-    }
-  }, [state.isFlask]);
+    detectSnapInstalled();
+  }, []);
 
   useEffect(() => {
     let timeoutId: number;

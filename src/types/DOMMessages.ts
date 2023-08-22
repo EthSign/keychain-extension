@@ -9,7 +9,6 @@ export type DOMMessage = {
     | "SET_NEVER_SAVE"
     | "CONNECT_SNAP"
     | "GET_SNAP"
-    | "IS_FLASK"
     | "SYNC"
     | "AUTOFILL"
     | "CLEAR_FORM_DATASET"

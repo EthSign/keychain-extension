@@ -41,7 +41,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!url || !state.installedSnap || Object.keys(state.installedSnap).length === 0 || !state.isFlask) {
+    if (!url || !state.installedSnap || Object.keys(state.installedSnap).length === 0) {
       handleCredentials(undefined);
       return;
     }
@@ -60,7 +60,7 @@ function App() {
       }
       handleLoading(false);
     })();
-  }, [state.installedSnap, state.isFlask, url]);
+  }, [state.installedSnap, url]);
 
   const handleSetSyncTo = async (syncTo: string) => {
     const res = await setSyncTo(syncTo);
