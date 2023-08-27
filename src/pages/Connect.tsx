@@ -21,13 +21,7 @@ function Connect(props: ConnectProps) {
         <div className="my-8">
           <KeychainLogo className="h-24 w-24" />
         </div>
-        <Button
-          className="px-8 py-3 mb-8"
-          onClick={connectToMetaMask}
-          disabled={!state.isFlask}
-          customSizing={true}
-          icon={<Chain />}
-        >
+        <Button className="px-8 py-3 mb-8" onClick={connectToMetaMask} customSizing={true} icon={<Chain />}>
           Connect MetaMask
         </Button>
       </div>

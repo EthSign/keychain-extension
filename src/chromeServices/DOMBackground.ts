@@ -600,15 +600,16 @@ async function getTabBaseUrl(tabId: number) {
  * @param tabUrl Current URL to check pending status for
  */
 async function updateExtensionIcon(tabUrl: string) {
+  // TODO: Instead of using different logos, we will start using badges.
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = getBaseUrl(tabUrl);
   if (obj.pending && obj.pending[url]) {
     chrome.action.setTitle({ title: "Open Keychain" });
-    chrome.action.setIcon({ path: "/images.png" });
+    chrome.action.setIcon({ path: "/icon.svg" });
   } else {
     chrome.action.setTitle({ title: "Keychain Alert" });
     chrome.action.setIcon({
-      path: "/images2.png"
+      path: "/icon.svg"
     });
   }
 }
