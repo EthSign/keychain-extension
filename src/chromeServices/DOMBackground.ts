@@ -415,7 +415,7 @@ function listener(message: any, sender: any, sendResponse: Function) {
           ? _.findIndex(message.credentials.logins, { username: message.username })
           : -1;
       if (idx < 0) {
-        chrome.action.setIcon({ path: "/images.png" });
+        chrome.action.setBadgeText({ text: "1" });
         chrome.storage.local
           .set({
             pending: Object.assign({}, obj, {
@@ -604,13 +604,11 @@ async function updateExtensionIcon(tabUrl: string) {
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = getBaseUrl(tabUrl);
   if (obj.pending && obj.pending[url]) {
-    chrome.action.setTitle({ title: "Open Keychain" });
-    chrome.action.setIcon({ path: "/icon.svg" });
+    chrome.action.setTitle({ title: "Save Password?" });
+    chrome.action.setBadgeText({ text: "1" });
   } else {
-    chrome.action.setTitle({ title: "Keychain Alert" });
-    chrome.action.setIcon({
-      path: "/icon.svg"
-    });
+    chrome.action.setTitle({ title: "EthSign Keychain" });
+    chrome.action.setBadgeText({ text: "" });
   }
 }
 
