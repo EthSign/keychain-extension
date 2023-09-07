@@ -7,6 +7,7 @@ import TopBar from "../components/TopBar";
 import { Credential } from "../types";
 import FileDropzone from "../components/FileDropzone";
 import SyncToBar from "../components/SyncToBar";
+import OriginPill from "../components/OriginPill";
 
 interface CredentialsProps {
   url?: string;
@@ -16,7 +17,6 @@ interface CredentialsProps {
   handleSync: () => Promise<boolean | undefined>;
   selectCallback?: (credential: {
     address?: string | undefined;
-    timestamp: number;
     url: string;
     username: string;
     password: string;
@@ -24,6 +24,14 @@ interface CredentialsProps {
   handleExportState: () => void;
   handleImportState: (state: { nonce: string; data: string }) => void;
   handleSetSyncTo: (syncTo: string) => Promise<void>;
+  handleEditCredential: (cred?: {
+    address?: string | undefined;
+    url: string;
+    username: string;
+    password: string;
+    controlled?: string | undefined;
+  }) => void;
+  removeCredential?: (username: string) => Promise<void>;
 }
 
 function Credentials(props: CredentialsProps) {
@@ -36,7 +44,9 @@ function Credentials(props: CredentialsProps) {
     selectCallback,
     handleExportState,
     handleImportState,
-    handleSetSyncTo
+    handleSetSyncTo,
+    handleEditCredential,
+    removeCredential
   } = props;
 
   const [importing, handleImporting] = useState(false);
@@ -46,9 +56,7 @@ function Credentials(props: CredentialsProps) {
       <>
         <TopBar />
         <div className="my-8 flex flex-col items-center">
-          <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
-            {url}
-          </div>
+          <OriginPill url={url} />
           <div className="text-2xl font-semibold mt-4">Import Credentials</div>
           <FileDropzone
             handleImportState={(state) => {
@@ -65,33 +73,31 @@ function Credentials(props: CredentialsProps) {
     <>
       <TopBar />
       <div className="my-8 flex flex-col items-center">
-        <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
-          {url}
+        <OriginPill url={url} />
+        <div className="text-2xl font-semibold mt-4">Credentials</div>
+        {/* <div className="mt-4 text-base">Select a password to autofill</div> */}
+        <div className="mt-2">
+          <SyncPasswordsBar syncPasswords={handleSync} />
         </div>
-        <div className="text-2xl font-semibold mt-4">EthSign Keychain</div>
-        <div className="mt-4 text-base">Select a password to autofill</div>
       </div>
 
-      <div
-        className={`mb-8 rounded-lg${
-          !credentials || credentials.logins.length === 0
-            ? ""
-            : " border border-gray-200 dark:border-white/20 dark:bg-[#222123]"
-        }`}
-      >
-        <DisplayCredentials
-          url={url}
-          credentials={credentials}
-          handleCredentials={handleCredentials}
-          selectCallback={selectCallback}
-        />
-      </div>
+      <DisplayCredentials
+        url={url}
+        credentials={credentials}
+        handleCredentials={handleCredentials}
+        selectCallback={selectCallback}
+        handleEditCredential={handleEditCredential}
+        removeCredential={removeCredential}
+      />
 
-      <SyncPasswordsBar syncPasswords={handleSync} />
-
-      <ExportStateBar exportState={handleExportState} />
-      <ImportStateBar handleImporting={handleImporting} />
       <SyncToBar syncTo={syncTo} handleSetSyncTo={handleSetSyncTo} />
+
+      <div className="mt-8 pt-4 border-t border-black/10 dark:border-white/20">
+        <ExportStateBar exportState={handleExportState} />
+        <div className="mt-1">
+          <ImportStateBar handleImporting={handleImporting} />
+        </div>
+      </div>
     </>
   );
 }

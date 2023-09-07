@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+
+  .body-overflow::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    background-color: #fff;
+  }
+
+  .body-overflow::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, .1);
+    border-radius: 2px;
+  }
+
+  .body-overflow-dark::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    background-color: #1E1E1E;
+  }
+
+  .body-overflow-dark::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, .2);
+    border-radius: 2px;
+  }
+
+  body {
+    @apply body-overflow dark:body-overflow-dark;
+  }
+}
+
 body {
   width: 480px;
   height: auto;
@@ -16,4 +45,9 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.noscroll {
+    height: 100%;
+    overflow: hidden;
 }

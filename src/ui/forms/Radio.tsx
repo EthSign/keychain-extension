@@ -24,7 +24,7 @@ function Radio(props: RadioProps) {
   };
 
   const classes =
-    `focus:ring-0 focus:outline-0 focus:ring-offset-0 bg-white hover:text-primary-700 text-primary-900 disabled:bg-primary-200` +
+    `focus:ring-0 focus:outline-0 focus:ring-offset-0 bg-white hover:text-primary-700 text-orange-500 dark:text-primary-900 disabled:bg-primary-200` +
     fontSize();
   return (
     <label className="flex items-center">

@@ -10,6 +10,7 @@ import {
   getSyncTo,
   neverSaveForSite,
   persistPendingForSite,
+  removeCredentialForSite,
   requestCredentials,
   sendAutofill,
   sendExportState,
@@ -22,6 +23,8 @@ import Credentials from "./pages/Credentials";
 import Pending from "./pages/Pending";
 import { Spinner } from "./components/icons/Spinner";
 import { download } from "./utils/files";
+import EditEntry from "./pages/EditEntry";
+import _ from "lodash";
 
 function App() {
   const [pending, handlePending] =
@@ -34,11 +37,33 @@ function App() {
   const [loading, handleLoading] = useState(false);
   const [loadingMessage, handleLoadingMessage] = useState("Loading...");
   const [syncTo, handleSyncTo] = useState<string | null | undefined>("");
+  const [editCredential, handleEditCredential] = useState<{
+    address?: string;
+    url: string;
+    username: string;
+    password: string;
+    controlled?: string;
+  }>();
 
   useEffect(() => {
     loadPending();
     loadCurrentUrl();
   }, []);
+
+  // Remove the ability to scroll while the loading overlay is displaying
+  useEffect(() => {
+    if (loading) {
+      if (!document.documentElement.classList.contains("noscroll")) {
+        document.documentElement.classList.add("noscroll");
+        document.body.classList.add("noscroll");
+        document.getElementById("root")?.classList.add("noscroll");
+      }
+    } else {
+      document.documentElement.classList.remove("noscroll");
+      document.body.classList.remove("noscroll");
+      document.getElementById("root")?.classList.remove("noscroll");
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (!url || !state.installedSnap || Object.keys(state.installedSnap).length === 0) {
@@ -179,14 +204,41 @@ function App() {
     if (!pending || !url || !pending[url]) {
       return;
     }
-    persistPendingForSite(url, pending[url]).then((response) => {
-      if (response?.data === "OK") {
-        requestCredentials(url).then((creds) => handleCredentials(creds));
-        const tempPending = Object.assign({}, pending, { [url]: undefined });
-        handlePending(tempPending);
-        window.close();
-      }
-    });
+
+    handleLoadingMessage("Saving...");
+    handleLoading(true);
+    persistPendingForSite(url, pending[url])
+      .then((response) => {
+        if (response?.data === "OK") {
+          requestCredentials(url).then((creds) => handleCredentials(creds));
+          const tempPending = Object.assign({}, pending, { [url]: undefined });
+          handlePending(tempPending);
+          window.close();
+        }
+      })
+      .finally(() => handleLoading(false));
+  };
+
+  /**
+   * Persists the user-edited entry for the current URL.
+   *
+   * @returns
+   */
+  const persistCredential = (cred: { address?: string; url: string; username: string; password: string }) => {
+    if (!cred || !url) {
+      return;
+    }
+
+    handleLoadingMessage("Saving...");
+    handleLoading(true);
+    persistPendingForSite(url, cred)
+      .then((response) => {
+        if (response?.data === "OK") {
+          requestCredentials(url).then((creds) => handleCredentials(creds));
+          handleEditCredential(undefined);
+        }
+      })
+      .finally(() => handleLoading(false));
   };
 
   /**
@@ -198,22 +250,65 @@ function App() {
     if (!pending || !url || !pending[url]) {
       return;
     }
-    neverSaveForSite(url).then((response) => {
-      if (response?.data === "OK") {
-        requestCredentials(url).then((creds) => handleCredentials(creds));
-        const tempPending = Object.assign({}, pending, { [url]: undefined });
-        handlePending(tempPending);
-        window.close();
-      }
-    });
+
+    handleLoadingMessage("Setting never save...");
+    handleLoading(true);
+    neverSaveForSite(url)
+      .then((response) => {
+        if (response?.data === "OK") {
+          requestCredentials(url).then((creds) => handleCredentials(creds));
+          const tempPending = Object.assign({}, pending, { [url]: undefined });
+          handlePending(tempPending);
+          window.close();
+        }
+      })
+      .finally(() => handleLoading(false));
+  };
+
+  /**
+   * Removes a credential entry for the current URL.
+   *
+   * @param username - Username of the entry we are removing.
+   * @returns
+   */
+  const removeCredential = async (username: string) => {
+    if (!url) {
+      return;
+    }
+
+    handleLoadingMessage("Deleting...");
+    handleLoading(true);
+    removeCredentialForSite(url, username)
+      .then((response) => {
+        if (response?.data === "OK") {
+          const tmpCred = Object.assign({}, credentials);
+          if (tmpCred && tmpCred.logins) {
+            const idx = _.findIndex(tmpCred.logins, { username: username });
+            if (idx >= 0) {
+              tmpCred.logins.splice(idx, 1);
+            }
+          }
+          handleCredentials(tmpCred);
+        }
+      })
+      .finally(() => handleLoading(false));
   };
 
   return (
-    <div className="font-plex dark:bg-black-900 dark:text-white">
+    <div className="font-plex dark:bg-black-900 dark:text-white body-overflow dark:body-overflow-dark">
       <div className="p-8">
         {Object.keys(state.installedSnap ?? {}).length === 0 ? (
           <>
             <Connect state={state} connectToMetaMask={connectToMetaMask} />
+          </>
+        ) : editCredential ? (
+          <>
+            <EditEntry
+              credential={editCredential}
+              url={url ?? ""}
+              cancel={() => handleEditCredential(undefined)}
+              persistEntry={persistCredential}
+            />
           </>
         ) : pending && url && pending[url] ? (
           <>
@@ -246,7 +341,6 @@ function App() {
               handleSetSyncTo={handleSetSyncTo}
               selectCallback={(credential: {
                 address?: string | undefined;
-                timestamp: number;
                 url: string;
                 username: string;
                 password: string;
@@ -255,6 +349,8 @@ function App() {
               }}
               handleExportState={handleExportState}
               handleImportState={handleImportState}
+              handleEditCredential={handleEditCredential}
+              removeCredential={removeCredential}
             />
           </>
         )}

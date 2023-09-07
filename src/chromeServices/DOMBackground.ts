@@ -7,6 +7,7 @@ let activeTabId: number,
   activeWindowId: number,
   initialSync = false;
 
+// TODO: Switch from flask to stable for providers
 /// Begin snap functions
 let provider: StreamProvider | undefined = undefined;
 try {
@@ -27,8 +28,7 @@ const checkProviderStatus = async () => {
     }
   }
   if (provider && !provider.isConnected()) {
-    console.log(provider);
-    // FREDERIK: The following lines have been added as an attempt to force a popup window so the user
+    // The following lines have been added as an attempt to force a popup window so the user
     // will unlock MetaMask. I tried two different ways (one uncommented, one commented). Neither seems
     // to do the trick on browser restart without reinstalling my extension.
     await provider.request({ method: "eth_requestAccounts" }).catch((err) => console.log(err));
@@ -596,11 +596,10 @@ async function getTabBaseUrl(tabId: number) {
 }
 
 /**
- * Update the icon of the extension depending on current pending status
+ * Update the badge of the extension depending on current pending status
  * @param tabUrl Current URL to check pending status for
  */
 async function updateExtensionIcon(tabUrl: string) {
-  // TODO: Instead of using different logos, we will start using badges.
   const obj = (await chrome.storage.local.get("pending")) ?? {};
   let url = getBaseUrl(tabUrl);
   if (obj.pending && obj.pending[url]) {

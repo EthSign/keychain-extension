@@ -1,3 +1,4 @@
+import OriginPill from "../components/OriginPill";
 import SyncPasswordsBar from "../components/SyncPasswordsBar";
 import TopBar from "../components/TopBar";
 import { Credential } from "../types";
@@ -36,9 +37,7 @@ function NeverSave(props: NeverSaveProps) {
     <>
       <TopBar />
       <div className="my-8 flex flex-col items-center">
-        <div className="rounded-full border border-gray-200 text-base text-gray-900 dark:text-white py-2 px-6 text-center">
-          {url}
-        </div>
+        <OriginPill url={url} />
         <div className="text-2xl font-semibold mt-4 text-center">
           You disabled EthSign Keychain.
           <br />
