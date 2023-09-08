@@ -7,11 +7,10 @@ let activeTabId: number,
   activeWindowId: number,
   initialSync = false;
 
-// TODO: Switch from flask to stable for providers
 /// Begin snap functions
 let provider: StreamProvider | undefined = undefined;
 try {
-  provider = createExternalExtensionProvider("flask");
+  provider = createExternalExtensionProvider("stable"); // can also be "flask"
 } catch (err) {
   console.log("Error creating provider", err);
 }
@@ -22,7 +21,7 @@ try {
 const checkProviderStatus = async () => {
   if (!provider || !provider.chainId) {
     try {
-      provider = createExternalExtensionProvider("flask");
+      provider = createExternalExtensionProvider("stable"); // can also be "flask"
     } catch (err) {
       console.log("Error creating provider", err);
     }
@@ -93,27 +92,6 @@ const getSnap = async (version: string) => {
   } catch (e) {
     console.log("Failed to obtain installed snap", e);
     return undefined;
-  }
-};
-
-/**
- * Detect if the wallet injecting the ethereum object is Flask.
- *
- * @returns True if the MetaMask version is Flask, false otherwise.
- */
-const isFlask = async () => {
-  await checkProviderStatus();
-  try {
-    const clientVersion = await provider?.request({
-      method: "web3_clientVersion"
-    });
-
-    // @ts-ignore
-    const isFlaskDetected = clientVersion?.includes("flask");
-
-    return Boolean(provider && isFlaskDetected);
-  } catch {
-    return false;
   }
 };
 
@@ -364,7 +342,6 @@ function listener(message: any, sender: any, sendResponse: Function) {
     !sender.origin.startsWith("chrome-extension") &&
     (message.type === "CONNECT_SNAP" ||
       message.type === "GET_SNAP" ||
-      message.type === "IS_FLASK" ||
       message.type === "EXPORT" ||
       message.type === "IMPORT" ||
       message.type === "SET_SYNC_TO")

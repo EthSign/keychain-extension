@@ -1,7 +1,7 @@
 {
   "name": "EthSign Keychain",
   "description": "Store and protect login credentials with your MetaMask wallet.",
-  "version": "1.0",
+  "version": "1.0.1",
   "manifest_version": 3,
   "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "action": {
