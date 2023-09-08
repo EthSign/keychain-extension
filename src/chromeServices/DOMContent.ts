@@ -115,7 +115,7 @@ const receiveMessage = (
           banner.style.display = "block";
           const message = banner.shadowRoot?.getElementById("ethsign-keychain-banner-message");
           message &&
-            (message.textContent = `Would you like to save your credentials for '${pending.username}' on this site?`);
+            (message.textContent = `Would you like to save your password for '${pending.username}' on this site?`);
         }
       }
       break;
