@@ -3,7 +3,7 @@
   "description": "Store and protect login credentials with your MetaMask wallet.",
   "version": "1.0.1",
   "manifest_version": 3,
-  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "permissions": ["activeTab", "tabs", "storage"],
   "action": {
     "default_popup": "index.html",
     "default_title": "Open EthSign Keychain"

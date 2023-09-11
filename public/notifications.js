@@ -169,6 +169,8 @@
     notNow.style.cursor = "pointer";
     notNow.id = "ethsign-keychain-not-now";
     notNow.textContent = "Not Now";
+    notNow.onmouseover = () => notNow.style.backgroundColor = "rgba(0, 0, 0, 0.05)";
+    notNow.onmouseout = () => notNow.style.backgroundColor = "transparent";
     notNow.onclick = () => {
       chrome.runtime.sendMessage({ type: "GET_ACTIVE_URL" }, (response) => {
         chrome.runtime.sendMessage({ type: "CLEAR_PENDING_FOR_SITE", data: { url: response.data } })
@@ -191,6 +193,8 @@
     save.style.cursor = "pointer";
     save.id = "ethsign-keychain-save";
     save.textContent = "Save Password";
+    save.onmouseover = () => save.style.backgroundColor = "#F4F4F4";
+    save.onmouseout = () => save.style.backgroundColor = "#FFFFFF";
     save.onclick = () => {
       chrome.runtime.sendMessage({ type: "GET_ACTIVE_URL" }, (response) => {
         // TODO: Add loading state here
