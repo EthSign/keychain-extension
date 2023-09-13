@@ -509,6 +509,8 @@ function listener(message: any, sender: any, sendResponse: Function) {
       .then((tabUrl) => getBaseUrl(tabUrl))
       .then((res) => sendResponse({ data: res }));
     return true;
+  } else if (message.type === "CHECK_PROVIDER_STATUS") {
+    sendResponse({ data: provider && provider.isConnected() });
   } else {
     sendResponse(message.type + " method not supported.");
   }

@@ -16,7 +16,8 @@ export type DOMMessage = {
     | "EXPORT"
     | "IMPORT"
     | "SET_SYNC_TO"
-    | "GET_SYNC_TO";
+    | "GET_SYNC_TO"
+    | "CHECK_PROVIDER_STATUS";
   login: any;
   action: any;
   settings: any;

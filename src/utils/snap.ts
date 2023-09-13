@@ -1,6 +1,35 @@
 import { Credential, DOMMessage, DOMMessageResponse } from "../types";
 
 /**
+ * Call to content script to detect MetaMask.
+ *
+ * @returns boolean | undefined
+ */
+export const checkProviderStatus = async () => {
+  return new Promise<any | undefined>((resolve) => {
+    chrome.tabs
+      ? chrome.tabs.query(
+          {
+            active: true,
+            currentWindow: true
+          },
+          (tabs) => {
+            chrome.tabs.sendMessage(
+              tabs[0].id || 0,
+              {
+                type: "CHECK_PROVIDER_STATUS"
+              } as DOMMessage,
+              (response: any) => {
+                resolve(response?.data ?? undefined);
+              }
+            );
+          }
+        )
+      : resolve(undefined);
+  });
+};
+
+/**
  * Call to content script for connecting to our snap.
  *
  * @returns

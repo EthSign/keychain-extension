@@ -99,6 +99,7 @@ const receiveMessage = (
     case "SYNC":
     case "EXPORT":
     case "GET_SYNC_TO":
+    case "CHECK_PROVIDER_STATUS":
       chrome.runtime.sendMessage({ type: msg.type }, (res) => sendResponse(res));
       return true;
     case "IMPORT":
